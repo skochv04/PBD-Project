@@ -1,6 +1,7 @@
 # Podstawy baz danych. Projekt
 Bernard Gawor, Olgierd Smyka, Stas Kochevenko
 AGH, Styczeń 2024
+Diagram: https://my.vertabelo.com/model/SbIzfPSIC6ucHngbkoakWSpVGdtkkUpr.
 
 ## Funkcjonalność systemu
 1. Użytkownicy
