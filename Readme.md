@@ -1,4 +1,4 @@
-﻿# **Podstawy baz danych Projekt**
+# **Podstawy baz danych Projekt**
 
 
 Bernard Gawor, Olgierd Smyka, Stas Kochevenko
@@ -68,4 +68,4 @@ Administrator (dyrektor szkoły):
 <div style="page-break-after: always;"></div>
 
 ## **2.Schemat Bazy Danych**
-![dbschema](img/Projekt-2023-12-08_18-36%20.png)
+![dbschema](img/Projekt-2023-12-18.png)
