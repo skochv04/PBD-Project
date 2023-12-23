@@ -68,7 +68,7 @@ Administrator (dyrektor szkoły):
 <div style="page-break-after: always;"></div>
 
 ## **2.Schemat Bazy Danych**
-![dbschema](img/Projekt-2023-12-18.png)
+![dbschema](img/Projekt-2023-12-22.png)
 
 ```sql
 -- tables
