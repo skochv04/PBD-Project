@@ -68,25 +68,24 @@ GROUP BY O.StudentID
 ```sql
 
 -- a) Lista osób
-select a.ClassID, s.StudentID, s.FirstName + ' ' + s.LastName as Student
-   from Attendance as a
-       inner join Students as s
-           on a.ParticipantID = s.StudentID
-       inner join Classes as c
-           on a.ClassID = c.ClassID
-   where c.EndTime < getdate()
+select a.ClassID, s.StudentID, s.FirstName + ' ' + s.LastName as Student, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime
+    from Attendance as a
+        inner join Students as s
+            on a.ParticipantID = s.StudentID
+        inner join Classes as c
+            on a.ClassID = c.ClassID
+    where c.EndTime < getdate()
 
 
 -- b) Liczba osób dla każdego wydarzenia
-select a.ClassID, count(s.StudentID) as StudentsAmount
-   from Attendance as a
-       inner join Students as s
-           on a.ParticipantID = s.StudentID
-       inner join Classes as c
-           on a.ClassID = c.ClassID
-   where c.EndTime < getdate()
-group by a.ClassID
-with rollup
+select a.ClassID, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime, count(s.StudentID) as StudentsAmount
+    from Classes as c
+        left join Attendance as a
+            on c.ClassID = a.ClassID
+        inner join Students as s
+            on a.ParticipantID = s.StudentID
+    where c.EndTime < getdate()
+group by a.ClassID, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime
 ```
 ### **5. Lista obecności dla każdego szkolenia z datą, imieniem, nazwiskiem i informacją czy uczestnik był obecny, czy nie.**
 ```sql
