@@ -1,4 +1,4 @@
-## 1. **Funkcjonalność systemu**
+## **Funkcjonalność systemu**
 
 ### **Użytkownicy**
 
