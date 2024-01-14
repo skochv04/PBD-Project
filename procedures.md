@@ -1,4 +1,4 @@
-## **Procedures**
+## **Procedury**
 
 ### **1. Dodanie nowego Studenta**
 ```sql
