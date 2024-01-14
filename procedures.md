@@ -31,12 +31,10 @@ BEGIN
        THROW 52034, @Message, 1;
    END CATCH
 END
+```
 
-
-
-2. Dodanie nowego kursu
-
-
+### **2. Dodanie nowego kursu**
+```sql
 CREATE PROCEDURE AddCourse
    @Place varchar(40),
    @Advance money,
@@ -90,10 +88,11 @@ BEGIN CATCH
     THROW 52011, @Message, 1;
 END CATCH
 END;
+```
 
+### **3. Usuwanie studenta**
+```sql
 
-
-3. Usuwanie studenta
 ALTER PROCEDURE DeleteStudent(@studentID INT)
 AS
 BEGIN
@@ -118,8 +117,12 @@ BEGIN
        THROW 52000, @msg, 1;
    END CATCH
 END
+```
 
-4. Aktualizacja danych studenta (tylko email albo country)
+
+### **4. Aktualizacja danych studenta (tylko email albo country)**
+```sql
+
 CREATE PROCEDURE ChangeStudentData(
   @studentID int,
   @countryID int = NULL,
@@ -137,10 +140,10 @@ BEGIN
        UPDATE Students SET Email = @Email WHERE StudentID = @studentID
    END
 END
+```
 
-
-5. Dodanie nowego nauczyciela
-
+### **5. Dodanie nowego nauczyciela**
+```sql
    CREATE PROCEDURE AddTeacher(
   @firstName VARCHAR(20),
   @lastName VARCHAR(20),
@@ -159,9 +162,10 @@ BEGIN
   VALUES (@NewID, @firstName, @lastName, @countryID)
   SELECT 'Teacher added successfully.' AS Message;
 END
+```
 
-
-6. Odrobienie nieobecności
+### **6. Odrobienie nieobecności**
+```sql
 	
 create procedure redoAttendance @classID int, @studentID int
 as
@@ -196,9 +200,11 @@ begin
        throw 77777, @error, 1
    end catch
 end
+```
 
+### **7. Dodawania zamówienia**
+```sql
 
-7. Dodawania zamówienia
 CREATE PROCEDURE AddOrder(
    @Studentid INT
 )
@@ -229,8 +235,11 @@ BEGIN
       THROW 52011, @Message, 1;
   END CATCH
 END
+```
 
-8. Rejestrowanie pojedynczych zajęć do zamówienia
+### **8. Rejestrowanie pojedynczych zajęć do zamówienia**
+```sql
+
 CREATE PROCEDURE RegisterClass(
   @OrderID INT,
   @ClassID INT
@@ -267,8 +276,11 @@ BEGIN
  END CATCH
 END
 
+```
 
-9. Rejestrowanie Programu do zamówienia
+### **9. Rejestrowanie Programu do zamówienia**
+```sql
+
 CREATE PROCEDURE RegisterProgram(
   @OrderID INT,
   @ProgramID INT,
@@ -306,8 +318,11 @@ BEGIN
      THROW 52011, @Message, 1;
  END CATCH
 END;
+```
 
-10. Dodanie nowego pojedynczego niestacjonarnego zajęcia
+### **10. Dodanie nowego pojedynczego niestacjonarnego zajęcia**
+```sql
+
 
 CREATE PROCEDURE AddOnlineClass
  @Link varchar(255),
@@ -370,7 +385,10 @@ BEGIN
  END CATCH
 END;
 
-11. Dodanie nowego pojedynczego stacjonarnego zajęcia
+```
+
+### **11. Dodanie nowego pojedynczego stacjonarnego zajęcia**
+```sql
 
 CREATE PROCEDURE AddOfflineClass
   @RoomNumber int,
@@ -447,8 +465,11 @@ BEGIN
       THROW 52000, @msg, 1;
   END CATCH
 END;
+```
 
-12. Dodanie nowego webinaru
+### **12. Dodanie nowego webinaru**
+```sql
+
 CREATE PROCEDURE AddWebinar
   @ProgramName varchar(100),
   @Language varchar(20),
@@ -512,8 +533,11 @@ BEGIN
 
   PRINT 'Webinar added successfully.';
 END;
+```
 
-13. Dodanie nowego kursu
+### **13. Dodanie nowego kursu**
+```sql
+
 CREATE PROCEDURE AddCourse
   @ProgramName varchar(100),
   @Language varchar(20),
@@ -567,8 +591,11 @@ BEGIN
 
   PRINT 'Course added successfully.';
 END;
+```
 
-14. Dodanie nowych studiów
+### **14. Dodanie nowych studiów**
+```sql
+
 CREATE PROCEDURE AddStudies
   @ProgramName varchar(100),
   @Language varchar(20),
@@ -624,11 +651,15 @@ BEGIN
 
   PRINT 'Studies added successfully.';
 END;
+```
 
-15. Zmiana szczegółów programu edukacyjnego (EducationalPrograms)
+### **15. Zmiana szczegółów programu edukacyjnego (EducationalPrograms)**
+```sql
+```
 
+### **16. Dodanie Płatności do złożonego zamówienia**
+```sql
 
-16. Dodanie Płatności do złożonego zamówienia
 CREATE PROCEDURE AddPayment
    @OrderID INT,
    @SystemPaymentID VARCHAR(255),
@@ -687,8 +718,11 @@ BEGIN
        THROW 52011, @ErrorMessage, 1;
    END CATCH
 END;
+```
 
-17. Anulowanie zamówienia
+### **17. Anulowanie zamówienia**
+```sql
+
 CREATE PROCEDURE CancelOrder
    @OrderID int
 AS
@@ -715,8 +749,11 @@ BEGIN
        THROW 52341, N'Order does not exits', 1;
    END
 END;
+```
 
-18. Wyswietl listę obecności dla wydarzenia
+### **18. Wyswietl listę obecności dla wydarzenia**
+```sql
+
 CREATE PROCEDURE GetAttendanceReport
    @ClassID int
 AS
@@ -736,8 +773,11 @@ BEGIN
        THROW 53523, N'There is no such class', 1;
    END
 END;
+```
 
-19. Dodanie nowych offline zajęć w ramach studiów
+### **19. Dodanie nowych offline zajęć w ramach studiów**
+```sql
+
 CREATE PROCEDURE AddStudiesOfflineClasses
   @StudiesID int,
   @RoomNumber int,
@@ -772,3 +812,13 @@ BEGIN
   EXEC AddOfflineClass @RoomNumber, @MaxParticipants, @TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID, @PractiseID, @NewClassID OUTPUT
   PRINT 'StudiesOfflineClasses added successfully.';
 END;
+
+```
+
+### **20. ...**
+```sql
+```
+
+### **21. ...**
+```sql
+```
