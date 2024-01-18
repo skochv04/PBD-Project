@@ -574,7 +574,7 @@ GROUP BY O.StudentID
 
 ```
 
-### **4. Ogólny raport dotyczący frekwencji na zakończonych już wydarzeniach..**
+### **4. Ogólny raport dotyczący frekwencji na zakończonych już wydarzeniach.**
 ```sql
 
 -- a) Lista osób
@@ -596,6 +596,16 @@ select a.ClassID, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime, count(s.Stud
             on a.ParticipantID = s.StudentID
     where c.EndTime < getdate()
 group by a.ClassID, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime
+```
+
+### **5. Lista obecności dla każdego szkolenia z datą, imieniem, nazwiskiem i informacją czy uczestnik był obecny, czy nie.**
+```sql
+
+SELECT C.ClassID, CONCAT(year(C.StartTime), '-', month(C.StartTime), '-', day(C.StartTime)) as Date, Students.FirstName + ' ' + Students.LastName as Name, A.Present
+FROM Classes C
+LEFT OUTER JOIN Attendance A on C.ClassID = A.ClassID
+LEFT OUTER JOIN Students on Students.StudentID = A.ParticipantID
+order by C.ClassID, Name
 ```
 
 ### **6. Raport bilokacji: lista osób, które są zapisane na co najmniej dwa przyszłe szkolenia, które ze sobą kolidują czasowo.**
@@ -1282,6 +1292,106 @@ END;
 ```
 
 <div style="page-break-after: always;"></div>
+
+### **15. Zmiana szczegółów programu edukacyjnego**
+```sql
+
+CREATE PROCEDURE UpdateEducationalProgram
+   @ProgramID INT,
+   @NewProgramName VARCHAR(100) = NULL,
+   @NewLanguage VARCHAR(20) = NULL,
+   @NewProgramStart DATE = NULL,
+   @NewProgramEnd DATE = NULL,
+   @NewProgramPrice MONEY = NULL,
+   @NewLecturerID INT = NULL,
+   @NewTranslatorID INT = NULL,
+   @NewSyllabus VARCHAR(255) = NULL,
+   @NewStudiesPlace VARCHAR(100) = NULL,
+   @NewMinParticipants INT = NULL,
+   @NewEntryFee MONEY = NULL,
+   @NewCoursesPlace VARCHAR(40) = NULL,
+   @NewAdvance MONEY = NULL,
+   @NewClassID INT = NULL
+AS
+BEGIN
+ BEGIN TRY
+   SET NOCOUNT ON;
+   DECLARE @IsCourse BIT, @IsWebinar BIT, @IsStudies BIT
+
+
+   -- Sprawdzenie typu programu na podstawie ProgramID
+   SELECT @IsCourse = IIF(EXISTS (SELECT 1 FROM EducationalPrograms WHERE ProgramID = @ProgramID and CourseID IS NOT NULL), 1, 0),
+          @IsWebinar = IIF(EXISTS (SELECT 1 FROM EducationalPrograms WHERE ProgramID = @ProgramID and WebinarID IS NOT NULL), 1, 0),
+          @IsStudies = IIF(EXISTS (SELECT 1 FROM EducationalPrograms WHERE ProgramID = @ProgramID and StudiesID IS NOT NULL), 1, 0)
+
+
+   IF @IsStudies = 1 AND (@NewSyllabus IS NOT NULL OR @NewStudiesPlace IS NOT NULL OR @NewMinParticipants IS NOT NULL OR @NewEntryFee IS NOT NULL)
+   BEGIN
+       UPDATE Studies
+       SET Syllabus = ISNULL(@NewSyllabus, Syllabus),
+           Place = ISNULL(@NewStudiesPlace, Place),
+           MaxParticipants = ISNULL(@NewMinParticipants, MaxParticipants),
+           EntryFee = ISNULL(@NewEntryFee, EntryFee)
+       FROM Studies
+       JOIN EducationalPrograms ON Studies.StudiesID = EducationalPrograms.StudiesID
+       WHERE EducationalPrograms.ProgramID = @ProgramID;
+   END
+   ELSE IF @IsStudies = 0 AND (@NewSyllabus IS NOT NULL OR @NewStudiesPlace IS NOT NULL OR @NewMinParticipants IS NOT NULL OR @NewEntryFee IS NOT NULL)
+       THROW 52313, N'EducationalProgram is not ranked in Studies', 10;
+
+
+   ELSE IF @IsCourse = 1 AND (@NewCoursesPlace IS NOT NULL OR @NewAdvance IS NOT NULL)
+   BEGIN
+       UPDATE Courses
+       SET Place = ISNULL(@NewCoursesPlace, Place),
+           Advance = ISNULL(@NewAdvance, Advance)
+       FROM Courses
+       JOIN EducationalPrograms ON Courses.CourseID = EducationalPrograms.CourseID
+       WHERE EducationalPrograms.ProgramID = @ProgramID;
+   END
+   ELSE IF @IsCourse = 0 AND (@NewCoursesPlace IS NOT NULL OR @NewAdvance IS NOT NULL)
+       THROW 52313, N'EducationalProgram is not ranked in Courses', 10;
+
+
+   ELSE IF @IsWebinar = 1 AND @NewClassID IS NOT NULL
+   BEGIN
+       IF NOT EXISTS (SELECT 1 FROM Classes WHERE ClassID = @NewClassID)
+           THROW 52314, N'NewClassID does not exist in Classes', 10;
+       UPDATE Webinars
+       SET ClassID = @NewClassID
+       FROM Webinars
+       JOIN EducationalPrograms ON Webinars.WebinarID = EducationalPrograms.WebinarID
+       WHERE EducationalPrograms.ProgramID = @ProgramID;
+   END
+   ELSE IF @IsWebinar = 0 AND @NewClassID IS NOT NULL
+       THROW 52313, N'EducationalProgram is not ranked in Webinars', 10;
+
+
+   IF (@NewProgramName IS NOT NULL OR @NewLanguage IS NOT NULL OR @NewProgramStart IS NOT NULL OR
+       @NewProgramEnd IS NOT NULL OR @NewProgramPrice IS NOT NULL OR @NewLecturerID IS NOT NULL OR
+       @NewTranslatorID IS NOT NULL)
+   BEGIN
+       IF @NewLecturerID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @NewLecturerID)
+           THROW 52314, N'NewLecturerID does not exist in Teachers', 10;
+       IF @NewTranslatorID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Translators WHERE TranslatorID = @NewTranslatorID)
+           THROW 52314, N'NewTranslatorID does not exist in Translators', 10;
+       UPDATE EducationalPrograms
+       SET ProgramName = ISNULL(@NewProgramName, ProgramName),
+           Language = ISNULL(@NewLanguage, Language),
+           ProgramStart = ISNULL(@NewProgramStart, ProgramStart),
+           ProgramEnd = ISNULL(@NewProgramEnd, ProgramEnd),
+           ProgramPrice = ISNULL(@NewProgramPrice, ProgramPrice),
+           LecturerID = ISNULL(@NewLecturerID, LecturerID),
+           TranslatorID = ISNULL(@NewTranslatorID, TranslatorID)
+       WHERE ProgramID = @ProgramID
+   END
+ END TRY
+ BEGIN CATCH
+   DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
+   THROW 123456, @Message, 10;
+ END CATCH
+END;
+```
 
 ### **16. Dodanie Płatności do złożonego zamówienia**
 ```sql
