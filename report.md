@@ -68,7 +68,7 @@ Administrator (dyrektor szkoły):
 <div style="page-break-after: always;"></div>
 
 ## **2.Schemat Bazy Danych**
-![dbschema](img/Projekt-2024-01-14_18-51.png)
+![dbschema](img/Projekt-2024-01-20_21-26.png)
 
 Oferowane przez firmę usługi (różnego rodzaju kursy i szkolenia) łączy EducationalPrograms. Każdy rekord przedstawia albo studia (Studies), albo kurs (Courses) albo webinar (Webinars). Spis wszystkich poszczególnych zajęć (spotkań) znajduje się w tabeli Classes. Spotkania mogą być stacjonarne (OfflineClasses) lub niestacjonarne (OnlineClasses).
 Kursy (Courses) składają się z modułów (Modules). Pojedyncze zajęcia tych modułów mogą być prowadzone stacjonarnie lub niestacjonarnie.
@@ -221,6 +221,8 @@ CREATE TABLE Orders (
    OrderID int  NOT NULL,
    StudentID int  NOT NULL,
    OrderDate datetime  NOT NULL DEFAULT GETDATE(),
+   OrderStatus varchar(40) NOT NULL DEFAULT 'NOT PAID',
+   CHECK(OrderStatus IN ('NOT PAID', 'ENTRY PAID', 'FULL PAID'))
    CONSTRAINT Orders_pk PRIMARY KEY  (OrderID)
 );
 
@@ -259,6 +261,7 @@ CREATE TABLE RegisteredClasses (
    RegisteredClassID int  NOT NULL,
    OrderID int  NOT NULL,
    ClassID int  NOT NULL,
+   Access bit NOT NULL DEFAULT 0,
    CONSTRAINT RegisteredClasses_pk PRIMARY KEY  (RegisteredClassID)
 );
 
@@ -271,6 +274,7 @@ CREATE TABLE RegisteredPrograms (
    ProgramID int  NOT NULL,
    Passed bit  NOT NULL DEFAULT 0,
    CertificateLink varchar(255)  NOT NULL,
+   Access bit NOT NULL DEFAULT 0,
    CONSTRAINT RegisteredPrograms_pk PRIMARY KEY  (RegisteredProgramID)
 );
 
@@ -515,6 +519,8 @@ ALTER TABLE Webinars ADD CONSTRAINT Webinars_Classes
 ### **1. Raporty finansowe – zestawienie przychodów dla każdego webinaru/kursu/studium**
 ```sql
 -- Webinars
+CREATE VIEW WebinarsRevenue 
+AS(
 SELECT Webinars.WebinarID, EducationalPrograms.ProgramName, SUM(Payments.Amount) AS Revenue
 FROM Webinars
 JOIN EducationalPrograms ON Webinars.WebinarID = EducationalPrograms.WebinarID
@@ -522,8 +528,11 @@ JOIN RegisteredPrograms ON RegisteredPrograms.ProgramID = EducationalPrograms.Pr
 JOIN Orders ON Orders.OrderID = RegisteredPrograms.OrderID
 JOIN Payments ON Orders.OrderID = Payments.OrderID
 GROUP BY Webinars.WebinarID, EducationalPrograms.ProgramName;
+)
 
 --Courses
+CREATE VIEW CoursesRevenue
+AS(
 SELECT Courses.CourseID, EducationalPrograms.ProgramName, SUM(Payments.Amount) AS Revenue
 FROM Courses
 INNER JOIN EducationalPrograms ON Courses.CourseID = EducationalPrograms.CourseID
@@ -531,8 +540,12 @@ JOIN RegisteredPrograms ON RegisteredPrograms.ProgramID = EducationalPrograms.Pr
 JOIN Orders ON Orders.OrderID = RegisteredPrograms.OrderID
 JOIN Payments ON Orders.OrderID = Payments.OrderID
 GROUP BY Courses.CourseID, EducationalPrograms.ProgramName;
+)
 
 -- Studies
+CREATE VIEW StudentRevenue
+AS
+(
 SELECT Studies.StudiesID, EducationalPrograms.ProgramName, SUM(Payments.Amount) AS Revenue
 FROM Studies
 JOIN EducationalPrograms ON Studies.StudiesID = EducationalPrograms.StudiesID
@@ -544,33 +557,40 @@ JOIN RegisteredClasses ON RegisteredClasses.ClassID = Classes.ClassID
 JOIN Orders ON Orders.OrderID = RegisteredClasses.OrderID OR Orders.OrderID = RegisteredPrograms.OrderID
 JOIN Payments ON Payments.OrderID = Orders.OrderID
 GROUP BY Studies.StudiesID, EducationalPrograms.ProgramName;
+)
 ```
 
 <div style="page-break-after: always;"></div>
 
 ### **2. Lista „dłużników” – osoby, które skorzystały z usług, ale nie uiściły opłat.**
 ```sql
-RAPORTOWANIE 2
-;WITH OrderProgramSum AS(
-SELECT O.StudentID, SUM(EP.ProgramPrice) AS ProgramsCost
-FROM Orders O
-JOIN RegisteredPrograms RP ON RP.OrderID = O.OrderID
-JOIN EducationalPrograms EP ON EP.ProgramID = RP.ProgramID
-GROUP BY O.StudentID
-),
-OrderClassesSum AS(
-SELECT O.StudentID, SUM(C.ClassPrice) AS ClassesCost
-FROM Orders O
-JOIN RegisteredClasses RC ON RC.OrderID = O.OrderID
-JOIN Classes  C ON C.ClassID = RC.ClassID
-GROUP BY O.StudentID
-),
-OrderPaid AS(
-SELECT O.StudentID, Sum(P.Amount) AS Paid
-FROM Orders O
-JOIN Payments P ON P.OrderID = O.OrderID
-GROUP BY O.StudentID
+CREATE VIEW Debtors 
+AS(
+SELECT S.*, ISNULL(OPS.ProgramsCost, 0) + ISNULL(OCS.ClassesCost, 0) - ISNULL(OP.Paid, 0) As Debt
+FROM Students S
+LEFT JOIN (
+    SELECT O.StudentID, SUM(EP.ProgramPrice) AS ProgramsCost
+    FROM Orders O
+    LEFT JOIN RegisteredPrograms RP ON RP.OrderID = O.OrderID
+    LEFT JOIN EducationalPrograms EP ON EP.ProgramID = RP.ProgramID
+    GROUP BY O.StudentID
+) OPS ON OPS.StudentID = S.StudentID
+LEFT JOIN (
+    SELECT O.StudentID, SUM(C.ClassPrice) AS ClassesCost
+    FROM Orders O
+    LEFT JOIN RegisteredClasses RC ON RC.OrderID = O.OrderID
+    LEFT JOIN Classes C ON C.ClassID = RC.ClassID
+    GROUP BY O.StudentID
+) OCS ON OCS.StudentID = S.StudentID
+LEFT JOIN (
+    SELECT O.StudentID, SUM(P.Amount) AS Paid
+    FROM Orders O
+    LEFT JOIN Payments P ON P.OrderID = O.OrderID
+    GROUP BY O.StudentID
+) OP ON OP.StudentID = S.StudentID
+WHERE ISNULL(OPS.ProgramsCost, 0) + ISNULL(OCS.ClassesCost, 0) > ISNULL(OP.Paid, 0)
 )
+
 
 ```
 
@@ -578,6 +598,8 @@ GROUP BY O.StudentID
 ```sql
 
 -- a) Lista osób
+CREATE VIEW  ParticipantsList
+AS(
 select a.ClassID, s.StudentID, s.FirstName + ' ' + s.LastName as Student, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime
     from Attendance as a
         inner join Students as s
@@ -585,9 +607,11 @@ select a.ClassID, s.StudentID, s.FirstName + ' ' + s.LastName as Student, c.Teac
         inner join Classes as c
             on a.ClassID = c.ClassID
     where c.EndTime < getdate()
-
+)
 
 -- b) Liczba osób dla każdego wydarzenia
+CREATE VIEW NumberOfParticipants AS
+(
 select a.ClassID, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime, count(s.StudentID) as StudentsAmount
     from Classes as c
         left join Attendance as a
@@ -596,34 +620,37 @@ select a.ClassID, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime, count(s.Stud
             on a.ParticipantID = s.StudentID
     where c.EndTime < getdate()
 group by a.ClassID, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime
+)
 ```
 
 ### **5. Lista obecności dla każdego szkolenia z datą, imieniem, nazwiskiem i informacją czy uczestnik był obecny, czy nie.**
 ```sql
 
-SELECT C.ClassID, CONCAT(year(C.StartTime), '-', month(C.StartTime), '-', day(C.StartTime)) as Date, Students.FirstName + ' ' + Students.LastName as Name, A.Present
+CREATE VIEW AttendanceAllClasses
+AS(
+SELECT C.ClassID, CONCAT(year(C.StartTime), '-', month(C.StartTime), '-', day(C.StartTime)) as Date, Students.FirstName + ' ' + Students.LastName as Student, A.Present
 FROM Classes C
 LEFT OUTER JOIN Attendance A on C.ClassID = A.ClassID
 LEFT OUTER JOIN Students on Students.StudentID = A.ParticipantID
-order by C.ClassID, Name
+)
 ```
 
 ### **6. Raport bilokacji: lista osób, które są zapisane na co najmniej dwa przyszłe szkolenia, które ze sobą kolidują czasowo.**
 ```sql
-select * from (select s.StudentID, s.FirstName + ' ' + s.LastName as Student, count(a.ClassID) as Bilocations
-from Students as s
-       inner join Orders as o
-           on s.StudentID = o.StudentID
-       inner join RegisteredPrograms as rp
-           on o.OrderID = rp.OrderID
-       inner join Modules as m
-           on rp.ProgramID = m.ProgramID
-       inner join Classes as a
-           on m.ModuleID = a.ModuleID
-       cross join Classes as b
+CREATE VIEW BilocationsList
+AS(
+select distinct s.StudentID, s.FirstName + ' ' + s.LastName as Student, a.ClassID as a_ClassID, a.StartTime as a_StartTime, a.EndTime as a_EndTime, b.ClassID as b_ClassID, b.StartTime as b_StartTime, b.EndTime as b_EndTime from Students as s
+        inner join Orders as o
+            on s.StudentID = o.StudentID
+        inner join RegisteredPrograms as rp
+            on o.OrderID = rp.OrderID
+        inner join Modules as m
+            on rp.ProgramID = m.ProgramID
+        inner join Classes as a
+            on m.ModuleID = a.ModuleID
+        cross join Classes as b
 where a.ClassID < b.ClassID and ((a.StartTime BETWEEN b.StartTime and b.EndTime) or (b.StartTime BETWEEN a.StartTime and a.EndTime) or (a.EndTime BETWEEN b.StartTime and b.EndTime) or (b.EndTime BETWEEN a.StartTime and a.EndTime))
-group by s.StudentID, s.FirstName + ' ' + s.LastName) as start
-where Bilocations >= 2
+)
 ```
 
 <div style="page-break-after: always;"></div>
@@ -642,19 +669,10 @@ AS
 BEGIN
    BEGIN TRY
        IF EXISTS(SELECT * FROM Students WHERE Email = @email)
-           THROW 52034, N'Email already in use', 1;
+            THROW 52034, N'Email already in use', 1;
        ELSE
-           DECLARE @NewID INT;
-           SELECT @NewID = ISNULL(MAX(StudentID),0) +1
-           FROM Students
-
-
-           -- Insert the new student into the Students table
-           INSERT INTO Students (StudentID, FirstName, LastName, CountryID, Email)
-           VALUES (@NewID, @firstName, @lastName, @countryID, @email);
-
-
-           SELECT 'Student added successfully.' AS Message;
+            INSERT INTO Students (FirstName, LastName, CountryID, Email)
+            VALUES (@firstName, @lastName, @countryID, @email);
    END TRY
    BEGIN CATCH
        DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
@@ -680,11 +698,6 @@ BEGIN
 BEGIN TRY
    SET NOCOUNT ON;
 
-
-   DECLARE @NewCourseID int;
-   DECLARE @NewProgramID int;
-
-
    IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @LecturerID)
    BEGIN
        THROW 50000, 'TeacherID does not exist in the Teachers table.', 1;
@@ -696,22 +709,13 @@ BEGIN TRY
        THROW 50000, 'TranslatorID does not exist in the Translators table.', 1;
    END;
 
-
-   SELECT @NewCourseID = ISNULL(MAX(CourseID), 0) + 1
-   FROM Courses;
-
-
-   INSERT INTO Courses (CourseID, Place, Advance)
-   VALUES (@NewCourseID, @Place, @Advance);
+   INSERT INTO Courses (Place, Advance)
+   VALUES (@Place, @Advance);
 
 
-   SELECT @NewProgramID = ISNULL(MAX(ProgramID), 0) + 1
-   FROM EducationalPrograms;
-
-
-   INSERT INTO EducationalPrograms (ProgramID, ProgramName, CourseID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
+   INSERT INTO EducationalPrograms (ProgramName, CourseID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
    VALUES (@NewProgramID, @ProgramName, @NewCourseID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
-   SELECT 'Course added successfully.' AS Message;
+
 END TRY
 BEGIN CATCH
     DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
@@ -776,27 +780,20 @@ END
 
 ### **5. Dodanie nowego nauczyciela**
 ```sql
-   CREATE PROCEDURE AddTeacher(
+CREATE PROCEDURE AddTeacher(
   @firstName VARCHAR(20),
   @lastName VARCHAR(20),
   @countryID INT
 )
 AS
 BEGIN
-  DECLARE @NewID INT;
-  SELECT @NewID = ISNULL(MAX(TeacherID),0) +1
-  FROM Teachers
 
-
-
-
-  INSERT INTO Teachers (TeacherID, FirstName, LastName, CountryID)
-  VALUES (@NewID, @firstName, @lastName, @countryID)
-  SELECT 'Teacher added successfully.' AS Message;
+  INSERT INTO Teachers (FirstName, LastName, CountryID)
+  VALUES (@firstName, @lastName, @countryID)
 END
 ```
 
-### **6. Odrobienie nieobecności**
+### **6. Oznaczenie odrobienia nieobecności na zajęciach przez studenta **
 ```sql
 	
 create procedure redoAttendance @classID int, @studentID int
@@ -834,44 +831,9 @@ begin
 end
 ```
 
-### **7. Dodawania zamówienia**
-```sql
-
-CREATE PROCEDURE AddOrder(
-   @Studentid INT
-)
-AS
-BEGIN
-  BEGIN TRY
-      IF EXISTS(SELECT * FROM Students WHERE StudentID = @Studentid)
-      BEGIN
-          DECLARE @NewID INT;
-          SELECT @NewID = ISNULL(MAX(OrderID),0) +1
-          FROM Orders
-
-
-
-
-          -- Insert the new student into the Students table
-          INSERT INTO Orders (OrderID, StudentID, OrderDate)
-          VALUES (@NewID, @Studentid, GETDATE());
-
-
-          SELECT 'Order added successfully.' AS Message;
-       END
-       ELSE
-           THROW 52011, N'There is no student with such id', 1;
-  END TRY
-  BEGIN CATCH
-      DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
-      THROW 52011, @Message, 1;
-  END CATCH
-END
-```
-
 <div style="page-break-after: always;"></div>
 
-### **8. Rejestrowanie pojedynczych zajęć do zamówienia**
+### **8. Dodanie pojedynczych zajęć do zamówienia**
 ```sql
 
 CREATE PROCEDURE RegisterClass(
@@ -884,24 +846,12 @@ BEGIN
       IF NOT EXISTS(SELECT * FROM Orders WHERE OrderID = @OrderID)
        THROW 52313, N'There is no Order with such id', 1;
 
-
-
-
       IF NOT EXISTS(SELECT * FROM Classes WHERE ClassID = @ClassID)
        THROW 52313, N'There is no Class with such id', 1;
 
 
-
-
-      DECLARE @NewID INT;
-      SELECT @NewID = ISNULL(MAX(RegisteredClassID),0) +1
-      FROM RegisteredClasses
-
-
-
-
-      INSERT INTO RegisteredClasses (RegisteredClassID, OrderID, ClassID)
-      VALUES (@NewID, @OrderID, @ClassID);
+      INSERT INTO RegisteredClasses (OrderID, ClassID)
+      VALUES (@OrderID, @ClassID);
       SELECT 'Class added successfully.' AS Message;
  END TRY
  BEGIN CATCH
@@ -914,7 +864,7 @@ END
 
 <div style="page-break-after: always;"></div>
 
-### **9. Rejestrowanie Programu do zamówienia**
+### **9. Dodawanie programu edukacyjnego do zamówienia**
 ```sql
 
 CREATE PROCEDURE RegisterProgram(
@@ -930,23 +880,12 @@ BEGIN
        THROW 52313, N'There is no Order with such id', 1;
 
 
-
-
       IF NOT EXISTS(SELECT * FROM EducationalPrograms WHERE ProgramID = @ProgramID)
        THROW 52313, N'There is no EducationlProram with such id', 1;
 
 
-
-
-      DECLARE @NewID INT;
-      SELECT @NewID = ISNULL(MAX(RegisteredProgramID),0) + 1
-      FROM RegisteredPrograms
-
-
-
-
-      INSERT INTO RegisteredPrograms (RegisteredProgramID, OrderID, ProgramID, Passed, CertificateLink)
-      VALUES (@NewID, @OrderID, @ProgramID, @Passed, @CertificateLink);
+      INSERT INTO RegisteredPrograms (OrderID, ProgramID, Passed, CertificateLink)
+      VALUES (@OrderID, @ProgramID, @Passed, @CertificateLink);
       SELECT 'Program added successfully.' AS Message;
  END TRY
  BEGIN CATCH
@@ -999,15 +938,20 @@ BEGIN
      BEGIN
          THROW 50000, 'PractiseID does not exist in the Practises table.', 1;
      END;
+
      SELECT @NewClassID = ISNULL(MAX(ClassID), 0) + 1
      FROM Classes;
+
      INSERT INTO Classes (ClassID, TeacherID, SubjectID, StartTime, EndTime, ClassPrice)
      VALUES (@NewClassID, @TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice);
+
      SELECT @NewOnlineClassID = ISNULL(MAX(OnlineClassID), 0) + 1
      FROM OnlineClasses;
+
      INSERT INTO OnlineClasses (OnlineClassID, ClassID, Link, Synch)
      VALUES (@NewOnlineClassID, @NewClassID, @Link, @Synch)
      IF @ModuleID IS NOT NULL
+
      BEGIN
          UPDATE Classes SET ModuleID = @ModuleID WHERE ClassID = @NewClassID
      END;
@@ -1045,10 +989,6 @@ AS
 BEGIN
   SET NOCOUNT ON;
 
-
-  DECLARE @NewOfflineClassID int;
-
-
   BEGIN TRY
       IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @TeacherID)
       BEGIN
@@ -1074,20 +1014,12 @@ BEGIN
       END;
 
 
-      SELECT @NewClassID = ISNULL(MAX(ClassID), 0) + 1
-      FROM Classes;
+      INSERT INTO Classes (TeacherID, SubjectID, StartTime, EndTime, ClassPrice, ModuleID)
+      VALUES (@TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID);
 
 
-      INSERT INTO Classes (ClassID, TeacherID, SubjectID, StartTime, EndTime, ClassPrice, ModuleID)
-      VALUES (@NewClassID, @TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID);
-
-
-      SELECT @NewOfflineClassID = ISNULL(MAX(OfflineClassID), 0) + 1
-      FROM OfflineClasses;
-
-
-      INSERT INTO OfflineClasses (OfflineClassID, ClassID, RoomNumber, MaxParticipants)
-      VALUES (@NewOfflineClassID, @NewClassID, @RoomNumber, @MaxParticipants)
+      INSERT INTO OfflineClasses (ClassID, RoomNumber, MaxParticipants)
+      VALUES (@NewClassID, @RoomNumber, @MaxParticipants)
 
 
       IF @PractiseID IS NOT NULL
@@ -1409,38 +1341,17 @@ BEGIN
            DECLARE @price INT;
            IF @PayFull = 1
            BEGIN
-           SELECT @price = (
-               SELECT SUM(ISNULL(EP.ProgramPrice,0)) + SUM(ISNULL(C.ClassPrice,0))
-               FROM Orders O
-               LEFT JOIN RegisteredPrograms RP ON RP.OrderID = O.OrderID
-               LEFT JOIN RegisteredClasses RC ON O.OrderID = RC.OrderID
-               LEFT JOIN Classes C ON RC.ClassID = C.ClassID
-               LEFT JOIN EducationalPrograms EP ON EP.ProgramID = RP.ProgramID
-               GROUP BY O.OrderID
-               HAVING O.OrderId = @OrderID
-           )
+           SELECT @price = dbo.CalculateFullPriceForOrder(@OrderID)
            END
+
            ELSE
            BEGIN
-           SELECT @price = (
-               SELECT SUM(ISNULL(S.EntryFee,0)) + SUM(ISNULL(CS.Advance,0)) + SUM(ISNULL(C.ClassPrice,0))
-               FROM Orders O
-               LEFT JOIN RegisteredPrograms RP ON RP.OrderID = O.OrderID
-               LEFT JOIN RegisteredClasses RC ON O.OrderID = RC.OrderID
-               LEFT JOIN Classes C ON RC.ClassID = C.ClassID
-               LEFT JOIN EducationalPrograms EP ON EP.ProgramID = RP.ProgramID
-               LEFT JOIN Studies S ON EP.StudiesID = S.StudiesID
-               LEFT JOIN Courses CS ON CS.CourseID = EP.CourseID
-               LEFT JOIN Webinars W ON W.WebinarID = EP.WebinarID
-               GROUP BY O.OrderID
-               HAVING O.OrderID = @OrderID
-           )
+           SELECT @price = dbo.CalculateEntryPriceForOrder(@OrderID)
            END
-           DECLARE @NewID INT;
-           SELECT @NewID = ISNULL(MAX(PaymentID),0) +1
+
            FROM Payments
-           INSERT INTO Payments (PaymentID, OrderId, Amount, Date, Status, SystemPaymentID )
-           VALUES (@NewID, @OrderID, @price, GETDATE(), 0, @SystemPaymentID)
+           INSERT INTO Payments (OrderId, Amount, Date, Status, SystemPaymentID )
+           VALUES (@OrderID, @price, GETDATE(), 0, @SystemPaymentID)
        END
        ELSE
        BEGIN
@@ -1453,37 +1364,6 @@ BEGIN
        DECLARE @ErrorMessage NVARCHAR(1000) = N'Error: ' + ERROR_MESSAGE();
        THROW 52011, @ErrorMessage, 1;
    END CATCH
-END;
-```
-
-### **17. Anulowanie zamówienia**
-```sql
-
-CREATE PROCEDURE CancelOrder
-   @OrderID int
-AS
-BEGIN
-   -- Check if the order exists
-   IF EXISTS (SELECT 1 FROM Orders WHERE OrderID = @OrderID)
-   BEGIN
-       -- Update the status and set OrderDate for the cancelled order
-       UPDATE Orders
-       SET OrderDate = '2099-12-31' -- You can set it to a specific date in the future or use a special code
-       WHERE OrderID = @OrderID;
-
-
-       -- Optionally, you may want to perform additional actions like updating related tables or logging the cancellation.
-      
-       -- Print a message indicating the order has been cancelled
-       PRINT 'Order ' + CAST(@OrderID AS varchar(10)) + ' has been cancelled.';
-
-
-   END
-   ELSE
-   BEGIN
-       -- Print a message if the order does not exist
-       THROW 52341, N'Order does not exits', 1;
-   END
 END;
 ```
 
@@ -1548,7 +1428,6 @@ BEGIN
 
 
   EXEC AddOfflineClass @RoomNumber, @MaxParticipants, @TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID, @PractiseID, @NewClassID OUTPUT
-  PRINT 'StudiesOfflineClasses added successfully.';
 END;
 
 ```
@@ -1630,12 +1509,71 @@ BEGIN
 END;
 ```
 
-### **4.Obliczanie łącznej kwoty wydanej przez danego studenta na Programy edukacyjne**
+
+
+### *4.Obliczanie sumy pełnym kwot za wszystkie programy na danym zamówieniu*
+
+```sql
+CREATE FUNCTION CalculateFullPriceForOrder
+(
+    @OrderID int 
+)
+RETURNS MONEY
+AS
+BEGIN
+    DECLARE @fullprice MONEY;
+    SELECT @fullprice = 
+    SUM(ISNULL(EP.ProgramPrice,0)) + SUM(ISNULL(C.ClassPrice,0))
+    FROM Orders O
+    LEFT JOIN RegisteredPrograms RP ON RP.OrderID = O.OrderID
+    LEFT JOIN RegisteredClasses RC ON O.OrderID = RC.OrderID
+    LEFT JOIN Classes C ON RC.ClassID = C.ClassID
+    LEFT JOIN EducationalPrograms EP ON EP.ProgramID = RP.ProgramID
+    GROUP BY O.OrderID
+    HAVING O.OrderId = @OrderID
+
+    RETURN ISNULL(@fullprice, 0)
+
+END;
+```
+
+### *5.Obliczanie sum cen wpisowych na programy na danym zamówieniu*
+
+```sql
+CREATE FUNCTION CalculateEntryPriceForOrder
+(
+    @OrderID int
+)
+RETURNS MONEY
+AS
+BEGIN
+    DECLARE @entryprice MONEY;
+    SELECT @entryprice = 
+    SUM(ISNULL(S.EntryFee,0)) + SUM(ISNULL(CS.Advance,0)) + SUM(ISNULL(C.ClassPrice,0))
+    FROM Orders O
+    LEFT JOIN RegisteredPrograms RP ON RP.OrderID = O.OrderID
+    LEFT JOIN RegisteredClasses RC ON O.OrderID = RC.OrderID
+    LEFT JOIN Classes C ON RC.ClassID = C.ClassID
+    LEFT JOIN EducationalPrograms EP ON EP.ProgramID = RP.ProgramID
+    LEFT JOIN Studies S ON EP.StudiesID = S.StudiesID
+    LEFT JOIN Courses CS ON CS.CourseID = EP.CourseID
+    LEFT JOIN Webinars W ON W.WebinarID = EP.WebinarID
+    GROUP BY O.OrderID
+    HAVING O.OrderID = @OrderID
+
+    RETURN ISNULL(@entryprice, 0)
+
+END;
+```
+
+### **6.Obliczanie łącznej kwoty wydanej przez danego studenta na Programy edukacyjne**
 ```sql
 
 CREATE FUNCTION CalculateTotalPaymentsForStudent
 (
-   @StudentID int
+   @StudentID int,
+   @StartDate datetime,
+   @EndDate datetime
 )
 RETURNS MONEY
 AS
@@ -1643,11 +1581,69 @@ BEGIN
    DECLARE @TotalPayments MONEY;
 
 
-   SELECT @TotalPayments = SUM(Amount)
-   FROM Payments
-   WHERE OrderID IN (SELECT OrderID FROM Orders WHERE StudentID = @StudentID) AND status = 1;
+   SELECT @TotalPayments = SUM(P.Amount)
+   FROM Payments P
+   WHERE P.OrderID IN (SELECT OrderID FROM Orders WHERE StudentID = @StudentID)
+   AND P.Date >= @StartDate 
+   AND P.Date <= @EndDate
+   AND status = 1;
 
 
    RETURN ISNULL(@TotalPayments, 0);
+END
+
+```
+
+## 5. **Triggery**
+
+### *1.Aktualiacja stanu zapłaty zamówienia po udanej transakcji w tabeli Payments*
+
+```sql
+CREATE TRIGGER trg_UpdateOrderStatus
+ON Payments
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF UPDATE(Status)
+    BEGIN
+        IF (SELECT Status FROM INSERTED) = 1
+        BEGIN
+            DECLARE @OrderID INT;
+            DECLARE @PaymentAmount MONEY;
+
+            SELECT @OrderID = i.OrderID
+            FROM INSERTED i;
+
+            SELECT @PaymentAmount = i.Amount
+            FROM INSERTED i;
+
+            IF(@PaymentAmount = dbo.CalculateFullPriceForOrder(@OrderID))
+            BEGIN
+                UPDATE Orders
+                SET OrderStatus = 'FULL PAID'
+                WHERE OrderID = @OrderID
+            END
+
+            ELSE
+            BEGIN
+                IF(@PaymentAmount = dbo.CalculateFullPriceForOrder(@OrderID))
+                BEGIN
+                    UPDATE Orders 
+                    SET OrderStatus = 'ENTRY PAID'
+                    WHERE OrderID = @OrderID
+                END
+                ELSE
+                BEGIN
+                    UPDATE Orders
+                    SET OrderStatus = 'NOT PAID'
+                    WHERE OrderID = @OrderID
+                END 
+            END
+        END
+    END
 END;
 ```
+
+## 6. **Indeksy**
+
