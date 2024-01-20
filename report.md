@@ -68,7 +68,7 @@ Administrator (dyrektor szkoły):
 <div style="page-break-after: always;"></div>
 
 ## **2.Schemat Bazy Danych**
-![dbschema](img/Projekt-2024-01-20_21-26.png)
+![dbschema](img/Projekt-2024-01-20.png)
 
 Oferowane przez firmę usługi (różnego rodzaju kursy i szkolenia) łączy EducationalPrograms. Każdy rekord przedstawia albo studia (Studies), albo kurs (Courses) albo webinar (Webinars). Spis wszystkich poszczególnych zajęć (spotkań) znajduje się w tabeli Classes. Spotkania mogą być stacjonarne (OfflineClasses) lub niestacjonarne (OnlineClasses).
 Kursy (Courses) składają się z modułów (Modules). Pojedyncze zajęcia tych modułów mogą być prowadzone stacjonarnie lub niestacjonarnie.
