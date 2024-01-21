@@ -77,7 +77,7 @@ Dyrektor szkoły:
 
 <div style="page-break-after: always;"></div>
 
-## **2.Schemat Bazy Danych**
+## **2. Schemat Bazy Danych**
 ![dbschema](img/Projekt-2024-01-20.png)
 
 Oferowane przez firmę usługi (różnego rodzaju kursy i szkolenia) łączy EducationalPrograms. Każdy rekord przedstawia albo studia (Studies), albo kurs (Courses) albo webinar (Webinars). Spis wszystkich poszczególnych zajęć (spotkań) znajduje się w tabeli Classes. Spotkania mogą być stacjonarne (OfflineClasses) lub niestacjonarne (OnlineClasses).
@@ -606,22 +606,41 @@ with
 tab as (
    select Classes.ClassID, count(Students.StudentID) as NumOfInterested
    from Classes
-       left outer join RegisteredClasses RC on Classes.ClassID = RC.ClassID and RC.Access = True
+       left outer join RegisteredClasses RC on Classes.ClassID = RC.ClassID and RC.Access = 'true'
        left outer join Orders on RC.OrderID = Orders.OrderID
        left outer join Students on Orders.StudentID = Students.StudentID
    where Classes.StartTime > getdate()
    group by Classes.ClassID)
-select Classes.ClassID, Classes.StartTime, tab.NumOfInterested, OfflineClassID, OnlineClassID
+select Classes.ClassID, Classes.StartTime, Teachers.FirstName + ' ' + Teachers.LastName as Teacher, Subjects.SubjectName, tab.NumOfInterested, OfflineClassID, OnlineClassID
 from Classes
    left outer join tab on tab.ClassID = Classes.ClassID
    left outer join OnlineClasses on Classes.ClassID = OnlineClasses.ClassID
    left outer join OfflineClasses on Classes.ClassID = OfflineClasses.ClassID
+   left outer join Teachers on Classes.TeacherID = Teachers.TeacherID
+   left outer join Subjects on Classes.SubjectID = Subjects.SubjectID
 where Classes.StartTime > getdate()
 ```
 ![NumOfInterestedInFutureClasses](img/NumOfInterestedInFutureClasses.png)
 
 
-### **4. Ogólny raport dotyczący listy osób listy osób zapisanych na stacjonarne zajęcia w ramach programu edukacyjnego.**
+### **4. Ogólny raport dotyczący liczby zapisanych osób na jeszcze nie rozpoczęte programy edukacyjne wraz z datą rozpoczęcia**
+```sql
+CREATE VIEW NumOfInterestedInFutureEducationalPrograms as
+with tab as (
+select EducationalPrograms.ProgramID, count(Students.StudentID) as NumOfInterested
+from EducationalPrograms
+   left outer join RegisteredPrograms RP on EducationalPrograms.ProgramID = RP.ProgramID and RP.Access = 'true'
+   left outer join Orders on RP.OrderID = Orders.OrderID
+   left outer join Students on Orders.StudentID = Students.StudentID
+where EducationalPrograms.ProgramStart > getdate()
+group by EducationalPrograms.ProgramID
+) select tab.ProgramID, EducationalPrograms.ProgramName, tab.NumOfInterested, EducationalPrograms.ProgramStart
+from EducationalPrograms
+   join tab on EducationalPrograms.ProgramID = tab.ProgramID
+```
+![NumOfInterestedInFutureEducationalPrograms](img/NumOfInterestedInFutureEducationalPrograms.png)
+
+### **5. Ogólny raport dotyczący listy osób listy osób zapisanych na stacjonarne zajęcia w ramach programu edukacyjnego.**
 ```sql
 
 CREATE VIEW OfflineParticipantsList as
@@ -646,7 +665,7 @@ from Students as st
 ```
 ![OfflineParticipantsList](img/OfflineParticipantsList.png)
 
-### **5. Lista obecności dla każdego szkolenia z datą, imieniem, nazwiskiem i informacją czy uczestnik był obecny, czy nie.**
+### **6. Lista obecności dla każdego szkolenia z datą, imieniem, nazwiskiem i informacją czy uczestnik był obecny, czy nie.**
 ```sql
 
 CREATE VIEW AttendanceAllClasses as 
@@ -657,7 +676,7 @@ LEFT OUTER JOIN Students on Students.StudentID = A.ParticipantID
 ```
 ![AttendanceAllClasses](img/AttendanceAllClasses.png)
 
-### **6. Raport bilokacji: Lista kolidujących się zajęć wraz z informacją o studencie, ID zajęć oraz kolidyjącymi się terminami.**
+### **7. Raport bilokacji: Lista kolidujących się zajęć wraz z informacją o studencie, ID zajęć oraz kolidyjącymi się terminami.**
 ```sql
 CREATE VIEW BilocationsList as select distinct s.StudentID, s.FirstName + ' ' + s.LastName as Student, a.ClassID as a_ClassID, a.StartTime as a_StartTime, a.EndTime as a_EndTime, b.ClassID as b_ClassID, b.StartTime as b_StartTime, b.EndTime as b_EndTime from Students as s
        inner join Orders as o
@@ -671,7 +690,128 @@ CREATE VIEW BilocationsList as select distinct s.StudentID, s.FirstName + ' ' + 
        cross join Classes as b
 where a.ClassID < b.ClassID and ((a.StartTime BETWEEN b.StartTime and b.EndTime) or (b.StartTime BETWEEN a.StartTime and a.EndTime) or (a.EndTime BETWEEN b.StartTime and b.EndTime) or (b.EndTime BETWEEN a.StartTime and a.EndTime))
 ```
-![AttendanceAllClasses](img/BilocationsList.png)
+![BilocationsList](img/BilocationsList.png)
+
+### **8. Liczba osób dla każdego zakończonego już wydarzenia**
+```sql
+CREATE VIEW NumberOfParticipations as select c.ClassID, c.TeacherID, t.FirstName + ' ' + t.LastName as Teacher, sub.SubjectName, c.StartTime, c.EndTime, count(s.StudentID) as StudentsAmount
+   from Classes as c
+       left join Attendance as a
+           on c.ClassID = a.ClassID
+       left join Students as s
+           on a.ParticipantID = s.StudentID
+       left join Teachers as t
+           on c.TeacherID = t.TeacherID
+       left join Subjects as sub
+           on c.SubjectID = sub.SubjectID
+   where c.EndTime < getdate()
+group by c.ClassID, c.TeacherID, t.FirstName + ' ' + t.LastName, sub.SubjectName, c.SubjectID, c.StartTime, c.EndTime
+```
+![NumberOfParticipations](img/NumberOfParticipations.png)
+
+
+
+### **9. Dane o każdym przeprowadzonym egzaminie, które zawierają ocenę, ID studenta, ID studiów, ID programu edukacyjnego oraz terminy rozpoczęcia & zakończenia danych studiów**
+```sql
+CREATE VIEW ExamDetails as select ex.ExamID, ex.StudentID, S2.FirstName + ' ' + S2.LastName as Student, ex.Mark, ex.StudiesID, ep.ProgramName, ep.ProgramStart, ep.ProgramEnd from exams as ex
+   inner join Studies as s
+       on ex.StudiesID = s.StudiesID
+   inner join dbo.Students S2
+       on ex.StudentID = S2.StudentID
+   inner join dbo.EducationalPrograms EP
+       on s.StudiesID = EP.StudiesID
+```
+![ExamDetails](img/ExamDetails.png)
+
+### **10. Lista przedmiotów prowadzonych w ramach modułów pewnych studiów wraz z informacją o kategorii oraz prowadzącym zajęcia z danego przedmiotu**
+```sql
+create view StudiesSubjectsInfo as select ed.ProgramID, ed.ProgramName, m.ModuleName, sub.SubjectName, sc.CategoryName, t.FirstName + ' ' + t.LastName as Teacher
+   from Studies as s
+       inner join EducationalPrograms as ed
+           on s.StudiesID = ed.StudiesID
+       inner join Modules as m
+           on ed.ProgramID = m.ProgramID
+       inner join Classes as c
+           on m.ModuleID = c.ModuleID
+       inner join Subjects as sub
+           on c.SubjectID = sub.SubjectID
+       inner join SubjectCategories as sc
+           on sub.CategoryID = sc.CategoryID
+       inner join Teachers as t
+           on c.TeacherID = t.TeacherID
+```
+![StudiesSubjectsInfo](img/StudiesSubjectsInfo.png)
+
+
+### **11. Lista przedmiotów prowadzonych w ramach modułów pewnych kursów wraz z informacją o kategorii oraz prowadzącym zajęcia z danego przedmiotu**
+```sql
+create view CoursesSubjectsInfo as select ed.ProgramID, ed.ProgramName, m.ModuleName, sub.SubjectName, sc.CategoryName, t.FirstName + ' ' + t.LastName as Teacher
+  from Courses
+      inner join EducationalPrograms as ed
+          on Courses.CourseID = ed.CourseID
+      inner join Modules as m
+          on ed.ProgramID = m.ProgramID
+      inner join Classes as c
+          on m.ModuleID = c.ModuleID
+      inner join Subjects as sub
+          on c.SubjectID = sub.SubjectID
+      inner join SubjectCategories as sc
+          on sub.CategoryID = sc.CategoryID
+      inner join Teachers as t
+          on c.TeacherID = t.TeacherID
+
+```
+![CoursesSubjectsInfo](img/CoursesSubjectsInfo.png)
+
+### **12. Lista przyszłych webinarów, widok wyświetla nazwę przedmiotu, imię i nazwisko nauczyciela, który prowadzi webinar, czas trwania oraz czas dostępu do webinaru**
+```sql
+create view WebinarsInfo as select w.WebinarID, c.ClassID, s.SubjectName, t.FirstName + ' ' + t.LastName as TeacherName, c.StartTime as WebinarStart, c.EndTime as WebinarEnd, ed.ProgramStart as AccessStart, ed.ProgramEnd as AccessEnd
+   from webinars as w
+       inner join dbo.Classes C on C.ClassID = w.ClassID
+       inner join dbo.OnlineClasses OC on C.ClassID = OC.ClassID
+       inner join dbo.Teachers T on C.TeacherID = T.TeacherID
+       inner join EducationalPrograms as Ed ON w.WebinarID = Ed.WebinarID
+       inner join Subjects as s on C.SubjectID = s.SubjectID
+```
+![WebinarsInfo](img/WebinarsInfo.png)
+
+### **13. Lista programów edukacyjnych, na które są zapisane studenty, wraz z numerem zamówienia, w którym dany program był zamówiony, datą rozpoczęcia i zakończenia programu oraz informacją o zaliczeniu.**
+```sql
+create view StudentsPrograms as select s.StudentID, s.FirstName + ' ' + s.LastName as Student, rp.RegisteredProgramID, ep.ProgramID, ep.ProgramName, ep.ProgramStart, ep.ProgramEnd, rp.Passed
+   from Students as s
+       inner join Orders as o
+           on s.StudentID = o.StudentID
+       inner join RegisteredPrograms as rp
+           on o.OrderID = rp.OrderID
+       inner join EducationalPrograms as ep
+           on rp.ProgramID = ep.ProgramID
+```
+![StudentsPrograms](img/StudentsPrograms.png)
+
+### **14. Lista osób, które są zapisane na dane zajęcia "z zewnątrz". Widok wyświetla imię i nazwisko studenta, numer zamówienia, w którym dane spotkanie było zamówione, numer spotkania, status dostępu, nazwę przedmiotu dla danego spotkania, nazwę modulu, w ramach którego jest prowadzone spotkanie, oraz nazwę praktyki (o ile to spotkanie jest praktyką)**
+```sql
+create view StudentsOuterClasses as select s.StudentID, s.FirstName + ' ' + s.LastName as Student, o.OrderID, c.ClassID, m.ModuleName, sub.SubjectName, t.FirstName + ' ' + t.LastName as Teacher, c.StartTime, c.EndTime, ofl.RoomNumber, rc.Access
+   from Students as s
+       inner join Orders as o
+           on s.StudentID = o.StudentID
+       inner join RegisteredClasses as rc
+           on o.OrderID = rc.OrderID
+       inner join Classes as c
+           on rc.ClassID = c.ClassID
+       inner join Modules as m
+           on c.ModuleID = m.ModuleID
+       left join Practises as p
+           on c.PractiseID = p.PractiseID
+       inner join Subjects as sub
+           on c.SubjectID = sub.SubjectID
+       inner join Teachers as t
+           on c.TeacherID = t.TeacherID
+       inner join OfflineClasses as ofl
+           on c.ClassID = ofl.ClassID
+```
+![StudentsOuterClasses](img/StudentsOuterClasses.png)
+
+
 
 <div style="page-break-after: always;"></div>
 
