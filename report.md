@@ -572,94 +572,106 @@ GROUP BY Studies.StudiesID, EducationalPrograms.ProgramName, EducationalPrograms
 
 ### **2. Lista „dłużników” – osoby, które skorzystały z usług, ale nie uiściły opłat.**
 ```sql
-CREATE VIEW Debtors 
-AS(
-SELECT S.*, ISNULL(OPS.ProgramsCost, 0) + ISNULL(OCS.ClassesCost, 0) - ISNULL(OP.Paid, 0) As Debt
-FROM Students S
-LEFT JOIN (
-    SELECT O.StudentID, SUM(EP.ProgramPrice) AS ProgramsCost
-    FROM Orders O
-    LEFT JOIN RegisteredPrograms RP ON RP.OrderID = O.OrderID
-    LEFT JOIN EducationalPrograms EP ON EP.ProgramID = RP.ProgramID
-    GROUP BY O.StudentID
-) OPS ON OPS.StudentID = S.StudentID
-LEFT JOIN (
-    SELECT O.StudentID, SUM(C.ClassPrice) AS ClassesCost
-    FROM Orders O
-    LEFT JOIN RegisteredClasses RC ON RC.OrderID = O.OrderID
-    LEFT JOIN Classes C ON C.ClassID = RC.ClassID
-    GROUP BY O.StudentID
-) OCS ON OCS.StudentID = S.StudentID
-LEFT JOIN (
-    SELECT O.StudentID, SUM(P.Amount) AS Paid
-    FROM Orders O
-    LEFT JOIN Payments P ON P.OrderID = O.OrderID
-    GROUP BY O.StudentID
-) OP ON OP.StudentID = S.StudentID
-WHERE ISNULL(OPS.ProgramsCost, 0) + ISNULL(OCS.ClassesCost, 0) > ISNULL(OP.Paid, 0)
-)
-
-
+CREATE VIEW Debtors AS
+    SELECT S.*, ISNULL(OPS.ProgramsCost, 0) + ISNULL(OCS.ClassesCost, 0) - ISNULL(OP.Paid, 0) As Debt
+    FROM Students S
+    LEFT JOIN (
+        SELECT O.StudentID, SUM(EP.ProgramPrice) AS ProgramsCost
+        FROM Orders O
+        LEFT JOIN RegisteredPrograms RP ON RP.OrderID = O.OrderID
+        LEFT JOIN EducationalPrograms EP ON EP.ProgramID = RP.ProgramID
+        GROUP BY O.StudentID
+    ) OPS ON OPS.StudentID = S.StudentID
+    LEFT JOIN (
+        SELECT O.StudentID, SUM(C.ClassPrice) AS ClassesCost
+        FROM Orders O
+        LEFT JOIN RegisteredClasses RC ON RC.OrderID = O.OrderID
+        LEFT JOIN Classes C ON C.ClassID = RC.ClassID
+        GROUP BY O.StudentID
+    ) OCS ON OCS.StudentID = S.StudentID
+    LEFT JOIN (
+        SELECT O.StudentID, SUM(P.Amount) AS Paid
+        FROM Orders O
+        LEFT JOIN Payments P ON P.OrderID = O.OrderID
+        GROUP BY O.StudentID
+    ) OP ON OP.StudentID = S.StudentID
+    WHERE ISNULL(OPS.ProgramsCost, 0) + ISNULL(OCS.ClassesCost, 0) > ISNULL(OP.Paid, 0)
 ```
+![Debtors](img/Debtors.png)
 
-### **4. Ogólny raport dotyczący frekwencji na zakończonych już wydarzeniach.**
+### **3. Ogólny raport dotyczący liczby zapisanych osób na przyszłe wydarzenia - realizowane w przyszłości zajęcia (z informacją, czy zajęcia są stacjonarnie, czy zdalnie).**
+```sql
+CREATE VIEW NumOfInterestedInFutureClasses as
+with
+tab as (
+   select Classes.ClassID, count(Students.StudentID) as NumOfInterested
+   from Classes
+       left outer join RegisteredClasses RC on Classes.ClassID = RC.ClassID and RC.Access = True
+       left outer join Orders on RC.OrderID = Orders.OrderID
+       left outer join Students on Orders.StudentID = Students.StudentID
+   where Classes.StartTime > getdate()
+   group by Classes.ClassID)
+select Classes.ClassID, Classes.StartTime, tab.NumOfInterested, OfflineClassID, OnlineClassID
+from Classes
+   left outer join tab on tab.ClassID = Classes.ClassID
+   left outer join OnlineClasses on Classes.ClassID = OnlineClasses.ClassID
+   left outer join OfflineClasses on Classes.ClassID = OfflineClasses.ClassID
+where Classes.StartTime > getdate()
+```
+![NumOfInterestedInFutureClasses](img/NumOfInterestedInFutureClasses.png)
+
+
+### **4. Ogólny raport dotyczący listy osób listy osób zapisanych na stacjonarne zajęcia w ramach programu edukacyjnego.**
 ```sql
 
--- a) Lista osób
-CREATE VIEW  ParticipantsList
-AS(
-select a.ClassID, s.StudentID, s.FirstName + ' ' + s.LastName as Student, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime
-    from Attendance as a
-        inner join Students as s
-            on a.ParticipantID = s.StudentID
-        inner join Classes as c
-            on a.ClassID = c.ClassID
-    where c.EndTime < getdate()
-)
-
--- b) Liczba osób dla każdego wydarzenia
-CREATE VIEW NumberOfParticipants AS
-(
-select a.ClassID, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime, count(s.StudentID) as StudentsAmount
-    from Classes as c
-        left join Attendance as a
-            on c.ClassID = a.ClassID
-        inner join Students as s
-            on a.ParticipantID = s.StudentID
-    where c.EndTime < getdate()
-group by a.ClassID, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime
-)
+CREATE VIEW OfflineParticipantsList as
+select st.StudentID, st.FirstName + ' ' + st.LastName as Student, c.ClassID, m.ModuleName, sub.SubjectName, t.FirstName + ' ' + t.LastName as Teacher, c.StartTime, c.EndTime, ofl.RoomNumber, rp.Access
+from Students as st
+    inner join Orders as od
+        on st.StudentID = od.StudentID
+    inner join RegisteredPrograms as rp
+        on od.OrderID = rp.OrderID
+    inner join EducationalPrograms as ep
+        on rp.ProgramID = ep.ProgramID
+    inner join Modules as m
+        on ep.ProgramID = m.ProgramID
+    inner join Classes as c
+        on m.ModuleID = c.ModuleID
+    inner join Subjects as sub
+        on c.SubjectID = sub.SubjectID
+    inner join Teachers as t
+        on c.TeacherID = t.TeacherID
+    inner join OfflineClasses as ofl
+        on c.ClassID = ofl.ClassID
 ```
+![OfflineParticipantsList](img/OfflineParticipantsList.png)
 
 ### **5. Lista obecności dla każdego szkolenia z datą, imieniem, nazwiskiem i informacją czy uczestnik był obecny, czy nie.**
 ```sql
 
-CREATE VIEW AttendanceAllClasses
-AS(
+CREATE VIEW AttendanceAllClasses as 
 SELECT C.ClassID, CONCAT(year(C.StartTime), '-', month(C.StartTime), '-', day(C.StartTime)) as Date, Students.FirstName + ' ' + Students.LastName as Student, A.Present
 FROM Classes C
 LEFT OUTER JOIN Attendance A on C.ClassID = A.ClassID
 LEFT OUTER JOIN Students on Students.StudentID = A.ParticipantID
-)
 ```
+![AttendanceAllClasses](img/AttendanceAllClasses.png)
 
-### **6. Raport bilokacji: lista osób, które są zapisane na co najmniej dwa przyszłe szkolenia, które ze sobą kolidują czasowo.**
+### **6. Raport bilokacji: Lista kolidujących się zajęć wraz z informacją o studencie, ID zajęć oraz kolidyjącymi się terminami.**
 ```sql
-CREATE VIEW BilocationsList
-AS(
-select distinct s.StudentID, s.FirstName + ' ' + s.LastName as Student, a.ClassID as a_ClassID, a.StartTime as a_StartTime, a.EndTime as a_EndTime, b.ClassID as b_ClassID, b.StartTime as b_StartTime, b.EndTime as b_EndTime from Students as s
-        inner join Orders as o
-            on s.StudentID = o.StudentID
-        inner join RegisteredPrograms as rp
-            on o.OrderID = rp.OrderID
-        inner join Modules as m
-            on rp.ProgramID = m.ProgramID
-        inner join Classes as a
-            on m.ModuleID = a.ModuleID
-        cross join Classes as b
+CREATE VIEW BilocationsList as select distinct s.StudentID, s.FirstName + ' ' + s.LastName as Student, a.ClassID as a_ClassID, a.StartTime as a_StartTime, a.EndTime as a_EndTime, b.ClassID as b_ClassID, b.StartTime as b_StartTime, b.EndTime as b_EndTime from Students as s
+       inner join Orders as o
+           on s.StudentID = o.StudentID
+       inner join RegisteredPrograms as rp
+           on o.OrderID = rp.OrderID
+       inner join Modules as m
+           on rp.ProgramID = m.ProgramID
+       inner join Classes as a
+           on m.ModuleID = a.ModuleID
+       cross join Classes as b
 where a.ClassID < b.ClassID and ((a.StartTime BETWEEN b.StartTime and b.EndTime) or (b.StartTime BETWEEN a.StartTime and a.EndTime) or (a.EndTime BETWEEN b.StartTime and b.EndTime) or (b.EndTime BETWEEN a.StartTime and a.EndTime))
-)
 ```
+![AttendanceAllClasses](img/BilocationsList.png)
 
 <div style="page-break-after: always;"></div>
 
