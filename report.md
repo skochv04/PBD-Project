@@ -1998,12 +1998,12 @@ CREATE FUNCTION AllClassParticipants(@ClassID int)
                 on ep.StudiesID = s.StudiesID
         )
 
-        select StudentID, Student, StudiesID
+        select StudentID, Student, StudiesID, Access
             from OfflineParticipantsList
                 inner join t
                     on t.ClassID = OfflineParticipantsList.ClassID and t.ClassID = @ClassID
         UNION
-        select StudentID, Student, StudiesID
+        select StudentID, Student, StudiesID, Access
             from StudentsOuterClasses
                 inner join t
                     on t.ClassID = StudentsOuterClasses.ClassID and t.ClassID = @ClassID
@@ -2013,14 +2013,14 @@ CREATE FUNCTION AllClassParticipants(@ClassID int)
 ### **13. Wyświetlenie listy osób zapisanych na dany program**
 ```sql
 CREATE FUNCTION AllProgramParticipants(@ProgramID int)
-   RETURNS TABLE
-       AS
-       RETURN
-       select distinct StudentID, Student
-       from StudentsPrograms as sp
-           inner join EducationalPrograms as ep
-               on ep.ProgramID = sp.ProgramID
-       where ep.ProgramID = @ProgramID
+    RETURNS TABLE
+        AS
+        RETURN
+        select distinct StudentID, Student, Access
+        from StudentsPrograms as sp
+            inner join EducationalPrograms as ep
+                on ep.ProgramID = sp.ProgramID
+        where ep.ProgramID = @ProgramID
 ```
 
 ### **14. Wyświetlenie listy studiów, na które dany student jest zapisany i ma dostęp. Funkcja wykorzystywana jest w procedurze #18 oraz triggerze #2**
