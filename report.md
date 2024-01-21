@@ -2028,55 +2028,67 @@ CREATE FUNCTION StudentCourses(@StudentID int)
 
 
 ## 5. **Triggery**
-### **1. Aktualiacja stanu zapłaty zamówienia po udanej transakcji w tabeli Payments.**
+### **1. Aktualizacja stanu zapłaty zamówienia po udanej transakcji w tabeli Payments, oraz nadanie dostępu po opłaceniu wpisowych**
 ```sql
-CREATE TRIGGER trg_UpdateOrderStatus
+ALTER TRIGGER trg_UpdateOrderStatus
 ON Payments
 AFTER UPDATE
 AS
 BEGIN
-   SET NOCOUNT ON;
-   IF UPDATE(Status)
-   BEGIN
-       IF (SELECT Status FROM INSERTED) = 1
-       BEGIN
-           DECLARE @OrderID INT;
-           DECLARE @PaymentAmount MONEY;
+  SET NOCOUNT ON;
+  IF UPDATE(Status)
+  BEGIN
+      IF (SELECT Status FROM INSERTED) = 1
+      BEGIN
+          DECLARE @OrderID INT;
+          DECLARE @PaymentAmount MONEY;
 
+          SELECT @OrderID = i.OrderID
+          FROM INSERTED i;
 
-           SELECT @OrderID = i.OrderID
-           FROM INSERTED i;
+          SELECT @PaymentAmount = i.Amount
+          FROM INSERTED i;
 
+          IF(@PaymentAmount = dbo.CalculateFullPriceForOrder(@OrderID))
+          BEGIN
+              UPDATE Orders
+              SET OrderStatus = 'FULL PAID'
+              WHERE OrderID = @OrderID
 
-           SELECT @PaymentAmount = i.Amount
-           FROM INSERTED i;
+              UPDATE RegisteredPrograms
+              SET Access = 1
+              WHERE OrderID = @OrderID
 
+              UPDATE RegisteredClasses
+              SET Access = 1
+              WHERE OrderID = @OrderID
+          END
 
-           IF(@PaymentAmount = dbo.CalculateFullPriceForOrder(@OrderID))
-           BEGIN
-               UPDATE Orders
-               SET OrderStatus = 'FULL PAID'
-               WHERE OrderID = @OrderID
-           END
+          ELSE
+          BEGIN
+              IF(@PaymentAmount = dbo.CalculateFullPriceForOrder(@OrderID))
+              BEGIN
+                  UPDATE Orders
+                  SET OrderStatus = 'ENTRY PAID'
+                  WHERE OrderID = @OrderID
+                 
+                  UPDATE RegisteredPrograms
+                  SET Access = 1
+                  WHERE OrderID = @OrderID
 
-
-           ELSE
-           BEGIN
-               IF(@PaymentAmount = dbo.CalculateFullPriceForOrder(@OrderID))
-               BEGIN
-                   UPDATE Orders
-                   SET OrderStatus = 'ENTRY PAID'
-                   WHERE OrderID = @OrderID
-               END
-               ELSE
-               BEGIN
-                   UPDATE Orders
-                   SET OrderStatus = 'NOT PAID'
-                   WHERE OrderID = @OrderID
-               END
-           END
-       END
-   END
+                  UPDATE RegisteredClasses
+                  SET Access = 1
+                  WHERE OrderID = @OrderID
+              END
+              ELSE
+              BEGIN
+                  UPDATE Orders
+                  SET OrderStatus = 'NOT PAID'
+                  WHERE OrderID = @OrderID
+              END
+          END
+      END
+  END
 END;
 
 ```
