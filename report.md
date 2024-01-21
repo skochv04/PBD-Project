@@ -1594,41 +1594,65 @@ END;
 ```sql
 
 CREATE PROCEDURE AddStudiesOfflineClasses
-  @StudiesID int,
-  @RoomNumber int,
-  @MaxParticipants int,
-  @TeacherID int,
-  @SubjectID int,
-  @StartTime datetime,
-  @EndTime datetime,
-  @ClassPrice money = NULL,
-  @ModuleID int,
-  @PractiseID int = NULL
+   @StudiesID int,
+   @RoomNumber int,
+   @MaxParticipants int,
+   @TeacherID int,
+   @SubjectID int,
+   @StartTime datetime,
+   @EndTime datetime,
+   @ClassPrice money = NULL,
+   @ModuleID int,
+   @PractiseID int = NULL
 
 AS
 BEGIN
-  SET NOCOUNT ON;
-  BEGIN TRY
-      DECLARE @StudiesMaxParticipants int;
-      DECLARE @NewClassID int;
+   SET NOCOUNT ON;
+   BEGIN TRY
+       DECLARE @StudiesMaxParticipants int;
+       DECLARE @NewClassID int;
+       DECLARE @StudiesProgramStart date;
+       DECLARE @StudiesProgramEnd date;
 
-      SELECT @StudiesMaxParticipants = (
-              SELECT MaxParticipants from Studies
-              where StudiesID = @StudiesID)
-      IF (@StudiesMaxParticipants > @MaxParticipants)
-      BEGIN
-          THROW 50000, 'Amount of each ClassesMaxParticipants should be equal or greater than StudiesMaxParticipants.', 1;
-      END;
+       SELECT @StudiesMaxParticipants = (
+               SELECT MaxParticipants from Studies
+               where StudiesID = @StudiesID)
 
-      EXEC AddOfflineClass @RoomNumber, @MaxParticipants, @TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID, @PractiseID, @NewClassID OUTPUT
+       SELECT @StudiesProgramStart = (
+               SELECT ProgramStart from EducationalPrograms
+               where StudiesID = @StudiesID)
 
-      PRINT 'StudiesOfflineClasses added successfully.';
+       SELECT @StudiesProgramEnd = (
+               SELECT ProgramEnd from EducationalPrograms
+               where StudiesID = @StudiesID)
 
-  END TRY
-  BEGIN CATCH
-      DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
-      THROW 52000, @msg, 1;
-  END CATCH
+       IF (@StudiesMaxParticipants > @MaxParticipants)
+       BEGIN
+           THROW 50000, 'Amount of each ClassesMaxParticipants should be equal or greater than StudiesMaxParticipants.', 1;
+       END;
+
+       IF NOT (@EndTime > @StartTime)
+       BEGIN
+           THROW 50000, 'EndTime of classes must be greater than StartTime', 1;
+       END;
+
+
+       IF NOT ((cast(@StartTime as date) BETWEEN @StudiesProgramStart AND @StudiesProgramEnd) AND (cast(@EndTime as date) BETWEEN @StudiesProgramStart AND @StudiesProgramEnd))
+       BEGIN
+           THROW 50000, 'Classes cannot be scheduled outside the duration of the EducationalProgram', 1;
+       END;
+
+       EXEC AddOfflineClass @RoomNumber, @MaxParticipants, @TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID, @PractiseID, @NewClassID OUTPUT
+
+       COMMIT TRAN
+       PRINT 'StudiesOfflineClasses added successfully.';
+
+   END TRY
+   BEGIN CATCH
+       ROLLBACK TRANSACTION
+       DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
+       THROW 52000, @msg, 1;
+   END CATCH
 END;
 ```
 ### **18. Procedura, pozwalająca na aktualizację oceny studenta z egzaminu z konkretnych studiów. W przypadku oceny, która mieści się w zakresie 50%-100% ustawia się zaliczenie danego programu w RegisteredPrograms za pomocą triggera #2.**
