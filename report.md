@@ -1808,7 +1808,7 @@ END;
 ```
 
 
-### **2. Trigger ustawiający status zaliczenia konkretnych studiów konkretnego studenta w przypadku aktualizacji/dodawaniu jego oceny za egzamin, która musi mieścić się w zakresie od 50% do 100%.**
+### **2. Ustawienie statusu zaliczenia konkretnych studiów konkretnego studenta w przypadku aktualizacji/dodawaniu jego oceny za egzamin, która musi mieścić się w zakresie od 50% do 100%.**
 ```sql
 CREATE TRIGGER PassStudies
 ON Exams
@@ -2133,3 +2133,8 @@ GRANT SELECT ON StudentStudies to student
 GRANT SELECT ON AllClassParticipants to student
 GRANT SELECT ON AllProgramParticipants to student
 ```
+
+
+## 8. **Generator danych**
+Do napisania generatora danych posłużyliśmy się językiem Python.
+Do komunikacji z bazą danych wykorzystana została biblioteka pyodbc, a do generowania losowych wartości biblioteka Faker.
