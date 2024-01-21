@@ -828,11 +828,14 @@ CREATE PROCEDURE AddStudent(
 AS
 BEGIN
    BEGIN TRY
+       SET NOCOUNT ON;
        IF EXISTS(SELECT * FROM Students WHERE Email = @email)
             THROW 52034, N'Email already in use', 1;
-       ELSE
-            INSERT INTO Students (FirstName, LastName, CountryID, Email)
-            VALUES (@firstName, @lastName, @countryID, @email);
+       IF NOT EXISTS(SELECT * FROM Countries WHERE CountryID = @CountryID)
+            THROW 52034, N'Country does not exist in the Countries table', 1;
+       INSERT INTO Students (FirstName, LastName, CountryID, Email)
+       VALUES (@firstName, @lastName, @countryID, @email);
+       PRINT 'Student added successfully.';
    END TRY
    BEGIN CATCH
        DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
@@ -862,8 +865,6 @@ BEGIN TRY
    BEGIN
        THROW 50000, 'TeacherID does not exist in the Teachers table.', 1;
    END;
-
-
    IF NOT EXISTS (SELECT 1 FROM Translators WHERE TranslatorID = @TranslatorID)
    BEGIN
        THROW 50000, 'TranslatorID does not exist in the Translators table.', 1;
@@ -875,7 +876,7 @@ BEGIN TRY
 
    INSERT INTO EducationalPrograms (ProgramName, CourseID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
    VALUES (@NewProgramID, @ProgramName, @NewCourseID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
-
+   PRINT 'Course added successfully.';
 END TRY
 BEGIN CATCH
     DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
@@ -886,7 +887,7 @@ END;
 
 <div style="page-break-after: always;"></div>
 
-### **3. Usuwanie studenta**
+### **3. Usuwanie danych studenta**
 ```sql
 
 ALTER PROCEDURE DeleteStudent(@studentID INT)
@@ -934,6 +935,7 @@ BEGIN
    IF @email IS NOT NULL
    BEGIN
        UPDATE Students SET Email = @Email WHERE StudentID = @studentID
+       PRINT 'Student data changed successfully.';
    END
 END
 ```
@@ -947,9 +949,17 @@ CREATE PROCEDURE AddTeacher(
 )
 AS
 BEGIN
-
-  INSERT INTO Teachers (FirstName, LastName, CountryID)
-  VALUES (@firstName, @lastName, @countryID)
+  BEGIN TRY
+    IF NOT EXISTS(SELECT * FROM Countries WHERE CountryID = @CountryID)
+        THROW 52034, N'Country does not exist in the Countries table', 1;
+    INSERT INTO Teachers (FirstName, LastName, CountryID)
+    VALUES (@firstName, @lastName, @countryID)
+    PRINT 'Teacher added successfully.';
+  END TRY
+  BEGIN CATCH
+        DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
+        THROW 52011, @Message, 1;
+  END CATCH
 END
 ```
 
@@ -1805,6 +1815,7 @@ BEGIN
        END
    END
 END;
+
 ```
 
 
