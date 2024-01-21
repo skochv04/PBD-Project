@@ -859,6 +859,7 @@ CREATE PROCEDURE AddCourse
 AS
 BEGIN
 BEGIN TRY
+   BEGIN TRANSACTION
    SET NOCOUNT ON;
 
    IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @LecturerID)
@@ -876,9 +877,12 @@ BEGIN TRY
 
    INSERT INTO EducationalPrograms (ProgramName, CourseID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
    VALUES (@NewProgramID, @ProgramName, @NewCourseID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
+
+   COMMIT TRANSACTION
    PRINT 'Course added successfully.';
 END TRY
 BEGIN CATCH
+    ROLLBACK TRANSACTION
     DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
     THROW 52011, @Message, 1;
 END CATCH
@@ -1039,7 +1043,6 @@ CREATE PROCEDURE RegisterClass(
 AS
 BEGIN
   BEGIN TRY
-       BEGIN TRAN REGISTER_CLASS
        IF NOT EXISTS(SELECT * FROM Orders WHERE OrderID = @OrderID)
         THROW 52313, N'There is no Order with such id', 1;
 
@@ -1054,11 +1057,9 @@ BEGIN
        INSERT INTO RegisteredClasses (OrderID, ClassID)
        VALUES (@OrderID, @ClassID);
 
-       COMMIT TRAN REGISTER_CLASS
        PRINT 'Class was added successfully!'
   END TRY
   BEGIN CATCH
-      ROLLBACK TRAN REGISTER_CLASS
       DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
       THROW 52011, @Message, 1;
   END CATCH
@@ -1081,7 +1082,6 @@ CREATE PROCEDURE RegisterProgram(
 AS
 BEGIN
 BEGIN TRY
-     BEGIN TRAN REGISTER_PROGRAM
      IF NOT EXISTS(SELECT * FROM Orders WHERE OrderID = @OrderID)
       THROW 52313, N'There is no Order with such id', 1;
 
@@ -1093,11 +1093,9 @@ BEGIN TRY
 
      INSERT INTO RegisteredPrograms (OrderID, ProgramID, Passed, CertificateLink)
      VALUES (@OrderID, @ProgramID, @Passed, @CertificateLink);
-     COMMIT TRAN REGISTER_PROGRAM
      PRINT 'Program was added successfully!'
 END TRY
 BEGIN CATCH
-    ROLLBACK TRAN REGISTER_PROGRAM
     DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
     THROW 52011, @Message, 1;
 END CATCH
@@ -1124,6 +1122,8 @@ AS
 BEGIN
  SET NOCOUNT ON;
  BEGIN TRY
+     BEGIN TRANSACTION
+
      IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @TeacherID)
      BEGIN
          THROW 50000, 'TeacherID does not exist in the Teachers table.', 1;
@@ -1166,9 +1166,12 @@ BEGIN
      BEGIN
          UPDATE Classes SET PractiseID = @PractiseID WHERE ClassID = @NewClassID
      END;
+
+     COMMIT TRANSACTION
      PRINT 'OnlineClass added successfully.';
  END TRY
  BEGIN CATCH
+     ROLLBACK TRANSACTION
      DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
      THROW 52000, @msg, 1;
  END CATCH
@@ -1196,6 +1199,8 @@ BEGIN
   SET NOCOUNT ON;
 
   BEGIN TRY
+      BEGIN TRANSACTION
+
       IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @TeacherID)
       BEGIN
           THROW 50000, 'TeacherID does not exist in the Teachers table.', 1;
@@ -1246,10 +1251,11 @@ BEGIN
           UPDATE Classes SET PractiseID = @PractiseID WHERE ClassID = @NewClassID
       END;
 
-
+      COMMIT TRANSACTION
       PRINT 'OfflineClass added successfully.';
   END TRY
   BEGIN CATCH
+      ROLLBACK TRANSACTION
       DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
       THROW 52000, @msg, 1;
   END CATCH
@@ -1283,6 +1289,8 @@ AS
 BEGIN
   SET NOCOUNT ON;
   BEGIN TRY
+      BEGIN TRANSACTION
+
       DECLARE @NewClassID int;
       DECLARE @NewWebinarID int;
 
@@ -1309,7 +1317,7 @@ BEGIN
       VALUES (@ProgramName, @NewWebinarID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
 
 
-      COMMIT TRAN
+      COMMIT TRANSACTION
       PRINT 'Webinar added successfully.';
   END TRY
   BEGIN CATCH
@@ -1340,6 +1348,9 @@ AS
 BEGIN
   SET NOCOUNT ON;
   BEGIN TRY
+    
+      BEGIN TRANSACTION
+
       DECLARE @NewCourseID int;
 
       IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @LecturerID)
@@ -1362,7 +1373,7 @@ BEGIN
       INSERT INTO EducationalPrograms (ProgramName, CourseID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
       VALUES (@ProgramName, @NewCourseID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
 
-      COMMIT TRAN
+      COMMIT TRANSACTION
       PRINT 'Course added successfully.';
   END TRY
   BEGIN CATCH
@@ -1395,8 +1406,10 @@ AS
 BEGIN
   SET NOCOUNT ON;
   BEGIN TRY
-      DECLARE @NewStudiesID int;
+      BEGIN TRANSACTION
 
+      DECLARE @NewStudiesID int;
+    
       IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @LecturerID)
       BEGIN
           THROW 50000, 'LecturerID does not exist in the Teachers table.', 1;
@@ -1415,7 +1428,7 @@ BEGIN
       INSERT INTO EducationalPrograms (ProgramName, StudiesID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
       VALUES (@ProgramName, @NewStudiesID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
 
-      COMMIT TRAN
+      COMMIT TRANSACTION
       PRINT 'Studies added successfully.';
 
 
@@ -1453,9 +1466,10 @@ CREATE PROCEDURE UpdateEducationalProgram
 AS
 BEGIN
  BEGIN TRY
+   BEGIN TRANSACTION
+
    SET NOCOUNT ON;
    DECLARE @IsCourse BIT, @IsWebinar BIT, @IsStudies BIT
-
 
    -- Sprawdzenie typu programu na podstawie ProgramID
    SELECT @IsCourse = IIF(EXISTS (SELECT 1 FROM EducationalPrograms WHERE ProgramID = @ProgramID and CourseID IS NOT NULL), 1, 0),
@@ -1523,8 +1537,11 @@ BEGIN
            TranslatorID = ISNULL(@NewTranslatorID, TranslatorID)
        WHERE ProgramID = @ProgramID
    END
+   COMMIT TRANSACTION
+
  END TRY
  BEGIN CATCH
+   ROLLBACK TRANSACTION
    DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
    THROW 123456, @Message, 10;
  END CATCH
@@ -1605,12 +1622,10 @@ BEGIN
 
       EXEC AddOfflineClass @RoomNumber, @MaxParticipants, @TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID, @PractiseID, @NewClassID OUTPUT
 
-      COMMIT TRAN
       PRINT 'StudiesOfflineClasses added successfully.';
 
   END TRY
   BEGIN CATCH
-      ROLLBACK TRANSACTION
       DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
       THROW 52000, @msg, 1;
   END CATCH
