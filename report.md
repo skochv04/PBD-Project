@@ -37,7 +37,7 @@ Pracownik systemowy:
 
 
 Dyrektor szkoły:
-Ma uprawnienia pracownika systemowego oraz ma dostęp do takich funkcji:
+- Ma uprawnienia pracownika systemowego oraz ma dostęp do takich funkcji:
 - Zmiana dostępu użytkownika do programu edukacyjnego
 
 
@@ -50,6 +50,12 @@ Ma uprawnienia pracownika systemowego oraz ma dostęp do takich funkcji:
 - Ogólny raport dotyczący frekwencji na zakończonych już wydarzeniach
 - Lista obecności dla każdego szkolenia z datą, imieniem, nazwiskiem i informacją czy uczestnik był obecny, czy nie
 - Raport bilokacji: lista osób, które są zapisane na co najmniej dwa przyszłe szkolenia, które ze sobą kolidują czasowo
+- Przegląd listy studentów zapisanych z zewnątrz
+- Przegląd szczegółów dotyczących konkretnych programów edukacyjnych
+- Automatyczna aktualizacja dostępu do zakupionych programów edukacyjnych oraz pojedynczych zajęć po udanej transakcji
+- Weryfikacja możliwości zmiany dostępu do programu edukacyjnego albo pojedynczych zajęć
+- Automatyczna zmiana statusu zaliczenia programu edukacyjnego po otrzymaniu pozytywnej oceny z egzaminu 
+
 
 ## **Specyfikacje**
 
@@ -61,12 +67,13 @@ Ma uprawnienia pracownika systemowego oraz ma dostęp do takich funkcji:
 - Tematyka programów studiów nie może być modyfikowana po ich rozpoczęciu
 - Praktyki trwają 14 dni – wymagana jest tu 100% frekwencja
 - Możliwość zapisania się na pojedyncze spotkania bez konieczności udziału w całym studium, przy tym cena jest inna
-- Administrator ma możliwość zapisu klientów na nieopłacone szkolenia
+- Administrator ma możliwość zapisu klientów na nieopłacone szkolenia // W sytuacjach wyjątkowych
 - Uczestnictwo w kursie wymaga wpłacenia zaliczki przy zapisie, oraz dopłaty całości kwoty najpóźniej 3 dni przed rozpoczęciem kursu
 - Uczestnictwo w studium wymaga uiszczenia wpisowego oraz uiszczenia opłaty za dany zjazd najpóźniej 3 dni przed jego rozpoczęciem
 - Szkolenia mogą być prowadzone w różnych ustalonych językach
 - Wszystkie zajęcia online odbywają się na zewnętrznej platformie chmurowej
 - System płatności jest dostarczany przez zewnętrzną firmę
+
 
 <div style="page-break-after: always;"></div>
 
@@ -522,46 +529,44 @@ ALTER TABLE Webinars ADD CONSTRAINT Webinars_Classes
 ### **1. Raporty finansowe – zestawienie przychodów dla każdego webinaru/kursu/studium**
 ```sql
 -- Webinars
-CREATE VIEW WebinarsRevenue 
-AS(
-SELECT Webinars.WebinarID, EducationalPrograms.ProgramName, SUM(Payments.Amount) AS Revenue
+CREATE VIEW WebinarsRevenue AS
+SELECT Webinars.WebinarID, EducationalPrograms.ProgramName, EducationalPrograms.ProgramStart AS WebinarStart, EducationalPrograms.ProgramEnd AS WebinarEnd, COALESCE(SUM(Payments.Amount),0) AS Revenue
 FROM Webinars
-JOIN EducationalPrograms ON Webinars.WebinarID = EducationalPrograms.WebinarID
-JOIN RegisteredPrograms ON RegisteredPrograms.ProgramID = EducationalPrograms.ProgramID
-JOIN Orders ON Orders.OrderID = RegisteredPrograms.OrderID
-JOIN Payments ON Orders.OrderID = Payments.OrderID
-GROUP BY Webinars.WebinarID, EducationalPrograms.ProgramName;
-)
-
---Courses
-CREATE VIEW CoursesRevenue
-AS(
-SELECT Courses.CourseID, EducationalPrograms.ProgramName, SUM(Payments.Amount) AS Revenue
-FROM Courses
-INNER JOIN EducationalPrograms ON Courses.CourseID = EducationalPrograms.CourseID
-JOIN RegisteredPrograms ON RegisteredPrograms.ProgramID = EducationalPrograms.ProgramID
-JOIN Orders ON Orders.OrderID = RegisteredPrograms.OrderID
-JOIN Payments ON Orders.OrderID = Payments.OrderID
-GROUP BY Courses.CourseID, EducationalPrograms.ProgramName;
-)
-
--- Studies
-CREATE VIEW StudentRevenue
-AS
-(
-SELECT Studies.StudiesID, EducationalPrograms.ProgramName, SUM(Payments.Amount) AS Revenue
-FROM Studies
-JOIN EducationalPrograms ON Studies.StudiesID = EducationalPrograms.StudiesID
-JOIN RegisteredPrograms ON RegisteredPrograms.ProgramID = EducationalPrograms.ProgramID
-JOIN Modules ON Modules.ProgramID = EducationalPrograms.ProgramID
-JOIN Practises ON Practises.StudiesID = Studies.StudiesID
-JOIN Classes ON Classes.ModuleID = Modules.ModuleID OR Classes.PractiseID = Practises.PractiseID
-JOIN RegisteredClasses ON RegisteredClasses.ClassID = Classes.ClassID
-JOIN Orders ON Orders.OrderID = RegisteredClasses.OrderID OR Orders.OrderID = RegisteredPrograms.OrderID
-JOIN Payments ON Payments.OrderID = Orders.OrderID
-GROUP BY Studies.StudiesID, EducationalPrograms.ProgramName;
-)
+LEFT JOIN EducationalPrograms ON Webinars.WebinarID = EducationalPrograms.WebinarID
+LEFT JOIN RegisteredPrograms ON RegisteredPrograms.ProgramID = EducationalPrograms.ProgramID
+LEFT JOIN Orders ON Orders.OrderID = RegisteredPrograms.OrderID
+LEFT JOIN Payments ON Orders.OrderID = Payments.OrderID
+GROUP BY Webinars.WebinarID, EducationalPrograms.ProgramName, EducationalPrograms.ProgramStart, EducationalPrograms.ProgramEnd
 ```
+![WebinarsRevenue](img/WebinarsRevenue.png)
+
+```sql
+--Courses
+CREATE VIEW CoursesRevenue AS SELECT Courses.CourseID, EducationalPrograms.ProgramName, EducationalPrograms.ProgramStart as CourseStart, EducationalPrograms.ProgramEnd as CourseEnd, COALESCE(SUM(Payments.Amount),0) AS Revenue
+FROM Courses
+LEFT JOIN EducationalPrograms ON Courses.CourseID = EducationalPrograms.CourseID
+LEFT JOIN RegisteredPrograms ON RegisteredPrograms.ProgramID = EducationalPrograms.ProgramID
+LEFT JOIN Orders ON Orders.OrderID = RegisteredPrograms.OrderID
+LEFT JOIN Payments ON Orders.OrderID = Payments.OrderID
+GROUP BY Courses.CourseID, EducationalPrograms.ProgramName, EducationalPrograms.ProgramStart, EducationalPrograms.ProgramEnd;
+```
+![CoursesRevenue](img/CoursesRevenue.png)
+
+```sql
+-- Studies
+CREATE VIEW StudiesRevenue AS SELECT Studies.StudiesID, EducationalPrograms.ProgramName, EducationalPrograms.ProgramStart as StudiesStart, EducationalPrograms.ProgramEnd as StudiesEnd, COALESCE(SUM(Payments.Amount),0) AS Revenue
+FROM Studies
+LEFT JOIN EducationalPrograms ON Studies.StudiesID = EducationalPrograms.StudiesID
+LEFT JOIN RegisteredPrograms ON RegisteredPrograms.ProgramID = EducationalPrograms.ProgramID
+LEFT JOIN Modules ON Modules.ProgramID = EducationalPrograms.ProgramID
+LEFT JOIN Practises ON Practises.StudiesID = Studies.StudiesID
+LEFT JOIN Classes ON Classes.ModuleID = Modules.ModuleID OR Classes.PractiseID = Practises.PractiseID
+LEFT JOIN RegisteredClasses ON RegisteredClasses.ClassID = Classes.ClassID
+LEFT JOIN Orders ON Orders.OrderID = RegisteredClasses.OrderID OR Orders.OrderID = RegisteredPrograms.OrderID
+LEFT JOIN Payments ON Payments.OrderID = Orders.OrderID
+GROUP BY Studies.StudiesID, EducationalPrograms.ProgramName, EducationalPrograms.ProgramStart, EducationalPrograms.ProgramEnd;
+```
+![StudiesRevenue](img/StudiesRevenue.png)
 
 <div style="page-break-after: always;"></div>
 
