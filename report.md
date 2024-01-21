@@ -90,7 +90,7 @@ Studenci mogą składać zamówienia (Orders) i przeglądać listę programów (
 ```sql
 -- Table:  Translators
 CREATE TABLE  Translators (
-   TranslatorID int  NOT NULL,
+   TranslatorID int AUTO_INCREMENT NOT NULL,
    FirstName varchar(20)  NOT NULL,
    LastName varchar(20)  NOT NULL,
    CountryID int  NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE  Translators (
 -- Table: Attendance
 -- Zawiera informacje dotyczące obecności konkretnych studentów z tabeli Students na zajęciach z tabeli Classes
 CREATE TABLE Attendance (
-   AttendanceID int  NOT NULL,
+   AttendanceID int AUTO_INCREMENT NOT NULL,
    ClassID int  NOT NULL,
    Present bit  NOT NULL DEFAULT 0,
    ParticipantID int  NOT NULL,
@@ -115,7 +115,7 @@ CREATE TABLE Attendance (
 -- Table: Classes
 -- Pojedyncze spotkanie w ramach programu edukacyjnego (albo konkretnego modułu w przypadku kursów lub studiów), może być w formacie online lub offline
 CREATE TABLE Classes (
-   ClassID int  NOT NULL,
+   ClassID int AUTO_INCREMENT NOT NULL,
    TeacherID int  NOT NULL,
    SubjectID int  NOT NULL,
    StartTime datetime  NOT NULL,
@@ -131,7 +131,7 @@ CREATE TABLE Classes (
 
 -- Table: Countries
 CREATE TABLE Countries (
-   CountryID int  NOT NULL,
+   CountryID int AUTO_INCREMENT NOT NULL,
    CountryName int  NOT NULL UNIQUE,
    CONSTRAINT Countries_pk PRIMARY KEY  (CountryID)
 );
@@ -139,7 +139,7 @@ CREATE TABLE Countries (
 
 -- Table: Courses
 CREATE TABLE Courses (
-   CourseID int  NOT NULL,
+   CourseID int AUTO_INCREMENT NOT NULL,
    Place varchar(40)  NOT NULL,
    Advance money  NOT NULL,
    CHECK (Advance >= 0),
@@ -153,7 +153,7 @@ CREATE TABLE Courses (
 -- Table: EducationalPrograms
 -- Zawiera szczegóły konkretnego programu edukacyjnego, którym mogą być studia z tabeli Studies, kursy z tabeli Courses lub Webinary z tabeli Webinars, w każdym rekorcie tylko jedna z trzech wartości: StudiesID, WebinarID, CourseID nie jest NULL-em.
 CREATE TABLE EducationalPrograms (
-   ProgramID int  NOT NULL,
+   ProgramID int AUTO_INCREMENT NOT NULL,
    ProgramName varchar(100)  NOT NULL UNIQUE,
    StudiesID int  NULL,
    WebinarID int  NULL,
@@ -173,7 +173,7 @@ CREATE TABLE EducationalPrograms (
 -- Table: Exams
 -- Zawiera wyniki z egzaminów dla studentów (Tabela Students) zapisanych na studia(Tabela Studies)
 CREATE TABLE Exams (
-   ExamID int  NOT NULL,
+   ExamID int AUTO_INCREMENT NOT NULL,
    StudiesID int  NOT NULL,
    StudentID int  NOT NULL,
    Mark int  NOT NULL DEFAULT 0,
@@ -190,7 +190,7 @@ CREATE TABLE Exams (
 -- Dla przykładu:
 -- Moduł “Programowanie w matematyce” mógłby obejmować szereg zajęć z przedmiotów matematycznych, na których problemy rozwiązywane są przy pomocy pisanego kodu
 CREATE TABLE Modules (
-   ModuleID int  NOT NULL,
+   ModuleID int AUTO_INCREMENT NOT NULL,
    ProgramID int  NOT NULL,
    ModuleName varchar(40)  NOT NULL,
    ModuleDescription varchar(100)  NOT NULL,
@@ -201,7 +201,7 @@ CREATE TABLE Modules (
 -- Table: OfflineClasses
 -- Podzbiór Classes: pojedyncze zajęcia, prowadzone w trybie offline (stacjonarnie), zawsze są podporządkowane jednemu modułu zajęć.
 CREATE TABLE OfflineClasses (
-   OfflineClassID int  NOT NULL,
+   OfflineClassID int AUTO_INCREMENT NOT NULL,
    ClassID int  NOT NULL,
    RoomNumber int  NOT NULL,
    MaxParticipants int  NOT NULL DEFAULT 0,
@@ -214,7 +214,7 @@ CREATE TABLE OfflineClasses (
 -- Table: OnlineClasses
 -- Podzbiór Classes: pojedyncze zajęcia, prowadzone w trybie online. Obejmują synchroniczne i asynchroniczne moduły.
 CREATE TABLE OnlineClasses (
-   OnlineClassID int  NOT NULL,
+   OnlineClassID int AUTO_INCREMENT NOT NULL,
    ClassID int  NOT NULL,
    Link varchar(255)  NOT NULL,
    Synch bit  NOT NULL DEFAULT 0,
@@ -228,7 +228,7 @@ CREATE TABLE OnlineClasses (
 -- Table: Orders
 -- Lista zamówień przez Studentów. Informacja o zakupionych programach oraz pojedynczych spotkaniach znajduje się w tabelach RegisteredPrograms i RegisteredClasses odpowiednio.
 CREATE TABLE Orders (
-   OrderID int  NOT NULL,
+   OrderID int AUTO_INCREMENT NOT NULL,
    StudentID int  NOT NULL,
    OrderDate datetime  NOT NULL DEFAULT GETDATE(),
    OrderStatus varchar(40) NOT NULL DEFAULT 'NOT PAID',
@@ -240,7 +240,7 @@ CREATE TABLE Orders (
 -- Table: Payments
 -- Spis płatność dokonanych w celu częściowego lub całkowitego opłacenia zamówienia z tabeli Orders. Kolumna Status informuje czy płatność została zakończona sukcesem, natomiast kolumna SystemPaymentID zawiera link do zewnętrznego systemu płatności.
 CREATE TABLE Payments (
-   PaymentID int  NOT NULL,
+   PaymentID int AUTO_INCREMENT NOT NULL,
    OrderID int  NOT NULL,
    Amount money  NOT NULL,
    Date date  NOT NULL DEFAULT GETDATE(),
@@ -253,7 +253,7 @@ CREATE TABLE Payments (
 -- Table: Practises
 -- Każde studia mogą zawierać wiele praktyk, tabela przetrzymuje opis i identyfikator danych praktyk. W Tabeli Classes znajduje się pole PracticeID, które nie jest NULL-em w przypadku gdy dane zajęcia realizują dane praktyki.
 CREATE TABLE Practises (
-   PractiseID int  NOT NULL,
+   PractiseID int AUTO_INCREMENT NOT NULL,
    StudiesID int  NOT NULL,
    PracticeName varchar(40)  NOT NULL,
    PracticeDescription varchar(255)  NOT NULL,
@@ -268,7 +268,7 @@ CREATE TABLE Practises (
 -- Table: RegisteredClasses
 -- Lista zakupionych przez studentów pojedynczych classes (zjazdów w ramach studiów) z numerami zamówienia
 CREATE TABLE RegisteredClasses (
-   RegisteredClassID int  NOT NULL,
+   RegisteredClassID int AUTO_INCREMENT NOT NULL,
    OrderID int  NOT NULL,
    ClassID int  NOT NULL,
    Access bit NOT NULL DEFAULT 0,
@@ -279,7 +279,7 @@ CREATE TABLE RegisteredClasses (
 -- Table: RegisteredPrograms
 -- Lista zakupionych przez studentów EducationalProgramów z numerami zamówienia
 CREATE TABLE RegisteredPrograms (
-   RegisteredProgramID int  NOT NULL,
+   RegisteredProgramID int AUTO_INCREMENT NOT NULL,
    OrderID int  NOT NULL,
    ProgramID int  NOT NULL,
    Passed bit  NOT NULL DEFAULT 0,
@@ -291,7 +291,7 @@ CREATE TABLE RegisteredPrograms (
 
 -- Table: Students
 CREATE TABLE Students (
-   StudentID int  NOT NULL,
+   StudentID int AUTO_INCREMENT NOT NULL,
    FirstName varchar(20)  NOT NULL,
    LastName varchar(20)  NOT NULL,
    CountryID int  NOT NULL,
@@ -302,7 +302,7 @@ CREATE TABLE Students (
 
 -- Table: Studies
 CREATE TABLE Studies (
-   StudiesID int  NOT NULL,
+   StudiesID int AUTO_INCREMENT NOT NULL,
    Syllabus varchar(255)  NOT NULL,
    Place varchar(100)  NOT NULL,
    MaxParticipants int  NOT NULL,
@@ -319,7 +319,7 @@ CREATE TABLE Studies (
 -- Zawiera kategorie różnych prowadzonych przedmiotów z tabeli Subjects
 -- np. Matematyka(SubjectCategories) jest kategorią przedmiotu algebra(Subjects)
 CREATE TABLE SubjectCategories (
-   CategoryID int  NOT NULL,
+   CategoryID int AUTO_INCREMENT NOT NULL,
    CategoryName varchar(40)  NOT NULL UNIQUE,
    Description varchar(255)  NOT NULL,
    CONSTRAINT SubjectCategories_pk PRIMARY KEY  (CategoryID)
@@ -328,7 +328,7 @@ CREATE TABLE SubjectCategories (
 
 -- Table: Subjects
 CREATE TABLE Subjects (
-   SubjectID int  NOT NULL,
+   SubjectID int AUTO_INCREMENT NOT NULL,
    CategoryID int  NOT NULL,
    Description varchar(255)  NOT NULL,
    SubjectName varchar(40)  NOT NULL UNIQUE,
@@ -338,7 +338,7 @@ CREATE TABLE Subjects (
 
 -- Table: Teachers
 CREATE TABLE Teachers (
-   TeacherID int  NOT NULL,
+   TeacherID int AUTO_INCREMENT NOT NULL,
    FirstName varchar(15)  NOT NULL,
    LastName varchar(15)  NOT NULL,
    CountryID int  NOT NULL,
@@ -348,7 +348,7 @@ CREATE TABLE Teachers (
 
 -- Table: Webinars
 CREATE TABLE Webinars (
-   WebinarID int  NOT NULL,
+   WebinarID int AUTO_INCREMENT NOT NULL,
    ClassID int  NOT NULL,
    CONSTRAINT Webinars_pk PRIMARY KEY  (WebinarID)
 );
@@ -1152,10 +1152,8 @@ BEGIN
      INSERT INTO Classes (TeacherID, SubjectID, StartTime, EndTime, ClassPrice)
      VALUES (@TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice);
 
-     SELECT @NewClassID = ISNULL(MAX(ClassID), 0)
-
-     INSERT INTO OnlineClasses (ClassID, Link, Synch)
-     VALUES (@NewClassID, @Link, @Synch)
+     INSERT INTO OnlineClasses (Link, Synch)
+     VALUES (@Link, @Synch)
 
      IF @ModuleID IS NOT NULL
      BEGIN
@@ -1240,10 +1238,9 @@ BEGIN
       INSERT INTO Classes (TeacherID, SubjectID, StartTime, EndTime, ClassPrice, ModuleID)
       VALUES (@TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID);
 
-      SELECT @NewClassID = ISNULL(MAX(ClassID), 0)
 
-      INSERT INTO OfflineClasses (ClassID, RoomNumber, MaxParticipants)
-      VALUES (@NewClassID, @RoomNumber, @MaxParticipants)
+      INSERT INTO OfflineClasses (RoomNumber, MaxParticipants)
+      VALUES (@RoomNumber, @MaxParticipants)
 
 
       IF @PractiseID IS NOT NULL
