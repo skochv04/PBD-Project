@@ -1003,74 +1003,111 @@ end
 
 <div style="page-break-after: always;"></div>
 
-### **8. Dodanie pojedynczych zajęć do zamówienia**
-```sql
+### **8. Dodanie zamówienia**
 
-CREATE PROCEDURE RegisterClass(
-  @OrderID INT,
-  @ClassID INT
+```sql
+CREATE PROCEDURE AddOrder(
+   @Studentid INT
 )
 AS
 BEGIN
- BEGIN TRY
-      IF NOT EXISTS(SELECT * FROM Orders WHERE OrderID = @OrderID)
-       THROW 52313, N'There is no Order with such id', 1;
+  BEGIN TRY
+      IF NOT EXISTS(SELECT * FROM Students WHERE StudentID = @Studentid)
+      BEGIN
+          THROW 52011, N'There is no student with such id', 1;
+      END
+      BEGIN
+          INSERT INTO Orders (StudentID, OrderDate)
+          VALUES (@Studentid, GETDATE());
 
-      IF NOT EXISTS(SELECT * FROM Classes WHERE ClassID = @ClassID)
-       THROW 52313, N'There is no Class with such id', 1;
-
-
-      INSERT INTO RegisteredClasses (OrderID, ClassID)
-      VALUES (@OrderID, @ClassID);
-      SELECT 'Class added successfully.' AS Message;
- END TRY
- BEGIN CATCH
-     DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
-     THROW 52011, @Message, 1;
- END CATCH
+          PRINT 'Order added successfully.';
+       END
+  END TRY
+  BEGIN CATCH
+      DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
+      THROW 52011, @Message, 1;
+  END CATCH
 END
+```
+### **9. Dodanie pojedynczych zajęć do zamówienia**
+```sql
+
+CREATE PROCEDURE RegisterClass(
+   @OrderID INT,
+   @ClassID INT
+)
+AS
+BEGIN
+  BEGIN TRY
+       BEGIN TRAN REGISTER_CLASS
+       IF NOT EXISTS(SELECT * FROM Orders WHERE OrderID = @OrderID)
+        THROW 52313, N'There is no Order with such id', 1;
+
+
+       IF NOT EXISTS(SELECT * FROM Classes WHERE ClassID = @ClassID)
+        THROW 52313, N'There is no Class with such id', 1;
+
+
+       IF EXISTS (SELECT * FROM RegisteredClasses WHERE OrderID = @OrderID and ClassID = @ClassID)
+        THROW 52313, N'Student has already registered for this class', 1;
+
+       INSERT INTO RegisteredClasses (OrderID, ClassID)
+       VALUES (@OrderID, @ClassID);
+
+       COMMIT TRAN REGISTER_CLASS
+       PRINT 'Class was added successfully!'
+  END TRY
+  BEGIN CATCH
+      ROLLBACK TRAN REGISTER_CLASS
+      DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
+      THROW 52011, @Message, 1;
+  END CATCH
+END
+
 
 ```
 
 <div style="page-break-after: always;"></div>
 
-### **9. Dodawanie programu edukacyjnego do zamówienia**
+### **10. Dodawanie programu edukacyjnego do zamówienia**
 ```sql
 
 CREATE PROCEDURE RegisterProgram(
-  @OrderID INT,
-  @ProgramID INT,
-  @Passed AS bit = FALSE,
-  @CertificateLink AS varchar(255) = NULL
+ @OrderID INT,
+ @ProgramID INT,
+ @Passed AS bit = FALSE,
+ @CertificateLink AS varchar(255) = NULL
 )
 AS
 BEGIN
- BEGIN TRY
-      IF NOT EXISTS(SELECT * FROM Orders WHERE OrderID = @OrderID)
-       THROW 52313, N'There is no Order with such id', 1;
+BEGIN TRY
+     BEGIN TRAN REGISTER_PROGRAM
+     IF NOT EXISTS(SELECT * FROM Orders WHERE OrderID = @OrderID)
+      THROW 52313, N'There is no Order with such id', 1;
 
+     IF NOT EXISTS(SELECT * FROM EducationalPrograms WHERE ProgramID = @ProgramID)
+      THROW 52313, N'There is no EducationalProgram with such id', 1;
 
-      IF NOT EXISTS(SELECT * FROM EducationalPrograms WHERE ProgramID = @ProgramID)
-       THROW 52313, N'There is no EducationlProram with such id', 1;
+     IF EXISTS (SELECT * FROM RegisteredPrograms WHERE OrderID = @OrderID and ProgramID = @ProgramID)
+       THROW 52313, N'Student has already registered for this educational program', 1;
 
-
-      INSERT INTO RegisteredPrograms (OrderID, ProgramID, Passed, CertificateLink)
-      VALUES (@OrderID, @ProgramID, @Passed, @CertificateLink);
-      SELECT 'Program added successfully.' AS Message;
- END TRY
- BEGIN CATCH
-     DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
-     THROW 52011, @Message, 1;
- END CATCH
+     INSERT INTO RegisteredPrograms (OrderID, ProgramID, Passed, CertificateLink)
+     VALUES (@OrderID, @ProgramID, @Passed, @CertificateLink);
+     COMMIT TRAN REGISTER_PROGRAM
+     PRINT 'Program was added successfully!'
+END TRY
+BEGIN CATCH
+    ROLLBACK TRAN REGISTER_PROGRAM
+    DECLARE @Message NVARCHAR(1000) = N'error: ' + ERROR_MESSAGE();
+    THROW 52011, @Message, 1;
+END CATCH
 END;
 ```
 
 <div style="page-break-after: always;"></div>
 
-### **10. Dodanie nowego pojedynczego niestacjonarnego zajęcia**
+### **11. Dodanie nowego pojedynczego niestacjonarnego zajęcia**
 ```sql
-
-
 CREATE PROCEDURE AddOnlineClass
  @Link varchar(255),
  @Synch bit,
@@ -1086,45 +1123,45 @@ CREATE PROCEDURE AddOnlineClass
 AS
 BEGIN
  SET NOCOUNT ON;
- DECLARE @NewOnlineClassID int;
  BEGIN TRY
      IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @TeacherID)
      BEGIN
          THROW 50000, 'TeacherID does not exist in the Teachers table.', 1;
      END;
+
      IF NOT EXISTS (SELECT 1 FROM Subjects WHERE SubjectID = @SubjectID)
      BEGIN
          THROW 50000, 'SubjectID does not exist in the Subjects table.', 1;
      END;
+
      IF (@ModuleID IS NOT NULL AND @PractiseID IS NOT NULL)
      BEGIN
          THROW 50000, 'Can`t define both ModuleID and PractiseID', 1;
      END;
+
      IF @ModuleID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Modules WHERE ModuleID = @ModuleID)
      BEGIN
          THROW 50000, 'ModuleID does not exist in the Modules table.', 1;
      END;
+
      IF @PractiseID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Practises WHERE PractiseID = @PractiseID)
      BEGIN
          THROW 50000, 'PractiseID does not exist in the Practises table.', 1;
      END;
 
-     SELECT @NewClassID = ISNULL(MAX(ClassID), 0) + 1
-     FROM Classes;
+     INSERT INTO Classes (TeacherID, SubjectID, StartTime, EndTime, ClassPrice)
+     VALUES (@TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice);
 
-     INSERT INTO Classes (ClassID, TeacherID, SubjectID, StartTime, EndTime, ClassPrice)
-     VALUES (@NewClassID, @TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice);
+     SELECT @NewClassID = ISNULL(MAX(ClassID), 0)
 
-     SELECT @NewOnlineClassID = ISNULL(MAX(OnlineClassID), 0) + 1
-     FROM OnlineClasses;
+     INSERT INTO OnlineClasses (ClassID, Link, Synch)
+     VALUES (@NewClassID, @Link, @Synch)
 
-     INSERT INTO OnlineClasses (OnlineClassID, ClassID, Link, Synch)
-     VALUES (@NewOnlineClassID, @NewClassID, @Link, @Synch)
      IF @ModuleID IS NOT NULL
-
      BEGIN
          UPDATE Classes SET ModuleID = @ModuleID WHERE ClassID = @NewClassID
      END;
+
      IF @PractiseID IS NOT NULL
      BEGIN
          UPDATE Classes SET PractiseID = @PractiseID WHERE ClassID = @NewClassID
@@ -1139,7 +1176,7 @@ END;
 
 ```
 
-### **11. Dodanie nowego pojedynczego stacjonarnego zajęcia**
+### **12. Dodanie nowego pojedynczego stacjonarnego zajęcia**
 ```sql
 
 CREATE PROCEDURE AddOfflineClass
@@ -1153,7 +1190,6 @@ CREATE PROCEDURE AddOfflineClass
   @ModuleID int,
   @PractiseID int = NULL,
   @NewClassID int OUTPUT
-
 
 AS
 BEGIN
@@ -1184,9 +1220,22 @@ BEGIN
       END;
 
 
+      -- Sprawdzenie, czy w ramach tych studiów można dodać zajęcia z taką maksymalną ilością miejsc
+      -- (musi ona być większa bądż równa od maksymalnej ilości miejsc dla studiów, żeby wszystkie studenty
+      -- mogli się zmieszcić, a dodatkowo mogą pojawić się miejsca dla osób "z zewnątrz"
+      DECLARE @MinParticipants INT;
+      SET @MinParticipants = dbo.CalculateMinClassParticipantsForStudies (@ModuleID);
+
+
+      IF @MaxParticipants < @MinParticipants
+      BEGIN
+          THROW 50000, 'MaxParticipants of class should be greater or equal to MaxParticipants of studies within which classes take place.', 1;
+      END;
+
       INSERT INTO Classes (TeacherID, SubjectID, StartTime, EndTime, ClassPrice, ModuleID)
       VALUES (@TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID);
 
+      SELECT @NewClassID = ISNULL(MAX(ClassID), 0)
 
       INSERT INTO OfflineClasses (ClassID, RoomNumber, MaxParticipants)
       VALUES (@NewClassID, @RoomNumber, @MaxParticipants)
@@ -1207,7 +1256,7 @@ BEGIN
 END;
 ```
 
-### **12. Dodanie nowego webinaru**
+### **13. Dodanie nowego webinaru**
 ```sql
 
 CREATE PROCEDURE AddWebinar
@@ -1233,49 +1282,46 @@ CREATE PROCEDURE AddWebinar
 AS
 BEGIN
   SET NOCOUNT ON;
+  BEGIN TRY
+      DECLARE @NewClassID int;
+      DECLARE @NewWebinarID int;
+
+      IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @LecturerID)
+      BEGIN
+          THROW 50000, 'LecturerID does not exist in the Teachers table.', 1;
+      END;
 
 
-  DECLARE @NewClassID int;
-  DECLARE @NewWebinarID int;
-  DECLARE @NewProgramID int;
+      IF @TranslatorID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Translators WHERE TranslatorID = @TranslatorID)
+      BEGIN
+          THROW 50000, 'TranslatorID does not exist in the Translators table.', 1;
+      END;
 
 
-  IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @LecturerID)
-  BEGIN
-      THROW 50000, 'LecturerID does not exist in the Teachers table.', 1;
-  END;
+      EXEC AddOnlineClass @Link, @Synch, @LecturerID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID, @PractiseID, @NewClassID OUTPUT
+
+      INSERT INTO Webinars (ClassID)
+      VALUES (@NewClassID);
+
+      SELECT @NewWebinarID = ISNULL(MAX(WebinarID), 0)
+
+      INSERT INTO EducationalPrograms (ProgramName, WebinarID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
+      VALUES (@ProgramName, @NewWebinarID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
 
 
-  IF @TranslatorID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Translators WHERE TranslatorID = @TranslatorID)
-  BEGIN
-      THROW 50000, 'TranslatorID does not exist in the Translators table.', 1;
-  END;
-  EXEC AddOnlineClass @Link, @Synch, @LecturerID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID, @PractiseID, @NewClassID OUTPUT
-
-
-  SELECT @NewWebinarID = ISNULL(MAX(WebinarID), 0) + 1
-  FROM Webinars;
-
-
-  INSERT INTO Webinars (WebinarID, ClassID)
-  VALUES (@NewWebinarID, @NewClassID);
-
-
-  SELECT @NewProgramID = ISNULL(MAX(ProgramID), 0) + 1
-  FROM EducationalPrograms;
-
-
-  INSERT INTO EducationalPrograms (ProgramID, ProgramName, WebinarID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
-  VALUES (@NewProgramID, @ProgramName, @NewWebinarID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
-
-
-
-
-  PRINT 'Webinar added successfully.';
+      COMMIT TRAN
+      PRINT 'Webinar added successfully.';
+  END TRY
+  BEGIN CATCH
+      ROLLBACK TRANSACTION
+      DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
+      THROW 52000, @msg, 1;
+  END CATCH
 END;
+
 ```
 
-### **13. Dodanie nowego kursu**
+### **14. Dodanie nowego kursu**
 ```sql
 
 CREATE PROCEDURE AddCourse
@@ -1294,9 +1340,6 @@ AS
 BEGIN
   SET NOCOUNT ON;
 
-
-  DECLARE @NewCourseID int;
-  DECLARE @NewProgramID int;
 
 
   IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @LecturerID)
@@ -1333,7 +1376,7 @@ BEGIN
 END;
 ```
 
-### **14. Dodanie nowych studiów**
+### **15. Dodanie nowych studiów**
 ```sql
 
 CREATE PROCEDURE AddStudies
@@ -1354,9 +1397,6 @@ AS
 BEGIN
   SET NOCOUNT ON;
 
-
-  DECLARE @NewStudiesID int;
-  DECLARE @NewProgramID int;
 
 
   IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @LecturerID)
@@ -1395,7 +1435,7 @@ END;
 
 <div style="page-break-after: always;"></div>
 
-### **15. Zmiana szczegółów programu edukacyjnego**
+### **16. Zmiana szczegółów programu edukacyjnego**
 ```sql
 
 CREATE PROCEDURE UpdateEducationalProgram
@@ -1495,7 +1535,7 @@ BEGIN
 END;
 ```
 
-### **16. Dodanie Płatności do złożonego zamówienia**
+### **17. Dodanie Płatności do złożonego zamówienia**
 ```sql
 
 CREATE PROCEDURE AddPayment
@@ -1583,10 +1623,7 @@ AS
 BEGIN
   SET NOCOUNT ON;
 
-
   DECLARE @StudiesMaxParticipants int;
-  DECLARE @NewClassID int;
-
 
   SELECT @StudiesMaxParticipants = (
           SELECT MaxParticipants from Studies
