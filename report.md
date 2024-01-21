@@ -11,33 +11,36 @@ Klient bez konta:
 - Wyświetlanie oferowanych usług
 - Utworzenie konta indywidualnego bądź firmowego
 
-Klient indywidualny:
+Student (klient z kontem):
 
 - Wyświetlanie oferowanych usług
-- Możliwość zapisu na szkolenia bezpłatne lub płatne poprzez uiszczenie opłaty
-- Wyświetlanie wszystkich kursów i szkoleń, na które jest zapisany oraz szczegółów ich dotyczących
+- Możliwość zapisu na bezpłatne lub płatne programy edukacyjne oraz pojedyncze zajęcia na wybranych studiach poprzez uiszczenie opłaty
+- Wyświetlanie wszystkich programów edukacyjnych, na które jest zapisany oraz szczegółów ich dotyczących
 - Dostęp do materiałów dydaktycznych w kursach i na studiach
+- Wyświetlanie harmonogramu zajęć, na które jest zapisany
 
-Klient firmowy:
+Pracownik (nauczyciel/translator): 
 
-- Wyświetlanie oferowanych usług
-- Możliwość zapisu na szkolenia bezpłatne lub płatne poprzez uiszczenie opłaty (indywidualnie bądź na firmę)
-- Wyświetlanie wszystkich kursów i szkoleń, na które jest zapisany oraz szczegółów ich dotyczących
-- Dostęp do materiałów dydaktycznych w kursach i na studiach.
-- Wyświetlanie faktur za szkolenia
+- Wyświetlanie wszystkich programów edukacyjnych, które prowadzi oraz szczegółów ich dotyczących
+- Dostęp do materiałów dydaktycznych programów edukacyjnych oraz możliwość ich edycji
+- Możliwość zatwierdzenia listy obecności studentów na zajęciach
+- Możliwość wystawiania ocen z zajęć oraz egzaminów studentów w ramach studiów (tylko dla nauczyciela)
+- Możliwość zatwierdzenia odrobienia nieobecności studenta
 
-Pracownicy:
-
-- Wyświetlanie wszystkich kursów i szkoleń, które prowadzi oraz szczegółów ich dotyczących oraz możliwość ich edycji
-- Dostęp do materiałów dydaktycznych w kursach i na studiach oraz możliwość ich edycji
-
-Administrator (dyrektor szkoły):
-
+Pracownik systemowy:
+- Zarządzanie harmonogramem zajęć, prowadzonych w ramach programów edukacyjnych
 - Aktualizacja oferowanych usług
-- Wystawianie faktur
+- Możliwość tworzenia raportów finansowych
+- Dostęp do danych statystycznych
+- Możliwość zmiany danych studenta
 - Edycja listy pracowników
-- Zmiana uprawnień użytkownika
-- Dostęp do funkcji systemowych oraz możliwość ich udostępnienia
+
+
+Dyrektor szkoły:
+Ma uprawnienia pracownika systemowego oraz ma dostęp do takich funkcji:
+- Zmiana dostępu użytkownika do programu edukacyjnego
+
+
 
 ## **System**
 
@@ -273,7 +276,7 @@ CREATE TABLE RegisteredPrograms (
    OrderID int  NOT NULL,
    ProgramID int  NOT NULL,
    Passed bit  NOT NULL DEFAULT 0,
-   CertificateLink varchar(255)  NOT NULL,
+   CertificateLink varchar(255),
    Access bit NOT NULL DEFAULT 0,
    CONSTRAINT RegisteredPrograms_pk PRIMARY KEY  (RegisteredProgramID)
 );
