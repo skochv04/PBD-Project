@@ -1700,61 +1700,87 @@ CREATE PROCEDURE SetExamMark(
 ### **19. "Jawna" zmiana statusu dostępu do programu edukacyjnego, którą jawnie ustawiać może wyłącznie dyrektor szkoły.**
 ```sql
 CREATE PROCEDURE SetProgramAccess(
- @RegisteredProgramID int,
- @Status int)
+  @RegisteredProgramID int,
+  @Status int)
 AS
 BEGIN
-  SET NOCOUNT ON;
-  BEGIN TRY
+   SET NOCOUNT ON;
+   BEGIN TRY
+       DECLARE @EducationalProgramID INT
+       SELECT @EducationalProgramID = (select ProgramID from RegisteredPrograms where RegisteredProgramID = @RegisteredProgramID)
+       IF NOT EXISTS (SELECT 1 FROM RegisteredPrograms WHERE RegisteredProgramID = @RegisteredProgramID)
+       BEGIN
+         THROW 50000, 'RegisteredProgramID does not exist in the RegisteredPrograms table.', 1;
+       END;
 
-      IF NOT EXISTS (SELECT 1 FROM RegisteredPrograms WHERE RegisteredProgramID = @RegisteredProgramID)
-      BEGIN
-        THROW 50000, 'RegisteredProgramID does not exist in the Students table.', 1;
-      END;
+       IF @Status != 0 AND @Status != 1
+       BEGIN;
+           throw 52000, N'Status should be equal to "1" to confirm access or "0" to cancel access', 1
+       END
 
-      IF @Status != 0 AND @Status != 1
-      BEGIN;
-          throw 52000, N'Status should be equal to "1" to confirm access or "0" to cancel access', 1
-      END
+       IF @Status = 1 AND EXISTS (SELECT 1 FROM EducationalPrograms where ProgramID = @EducationalProgramID and StudiesID is not null)
+       BEGIN
+           DECLARE @MaxParticipants INT
+           SELECT @MaxParticipants = (select MaxParticipants from EducationalPrograms inner join Studies on EducationalPrograms.StudiesID = Studies.StudiesID)
 
-      BEGIN
-          UPDATE RegisteredPrograms SET Access = @Status WHERE RegisteredProgramID = @RegisteredProgramID
-      END
+           IF (SELECT COUNT(*) FROM AllProgramParticipants(@EducationalProgramID) WHERE Access = 'true') = @MaxParticipants
+           BEGIN
+                THROW 52313, N'Participants number over MaxParticipants number for this Program', 1;
+           END
+       END
 
-  END TRY
-  BEGIN CATCH
-    DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
-    THROW 52000, @msg, 1;
-  END CATCH
+       BEGIN
+           UPDATE RegisteredPrograms SET Access = @Status WHERE RegisteredProgramID = @RegisteredProgramID
+       END
+   END TRY
+   BEGIN CATCH
+     DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
+     THROW 52000, @msg, 1;
+   END CATCH
 END
 ```
 
 ### **20. "Jawna" zmiana statusu dostępu do pojedynczych zajęć, którą jawnie ustawiać może wyłącznie dyrektor szkoły.**
 ```sql
 CREATE PROCEDURE SetClassAccess(
- @RegisteredClassID int,
- @Status int)
+  @RegisteredClassID int,
+  @Status int)
 AS
 BEGIN
-  SET NOCOUNT ON;
-  BEGIN TRY
-      IF NOT EXISTS (SELECT 1 FROM RegisteredClasses WHERE RegisteredClassID = @RegisteredClassID)
-      BEGIN
-        THROW 50000, 'RegisteredClassID does not exist in the RegisteredClasses table.', 1;
-      END;
+   SET NOCOUNT ON;
+   BEGIN TRY
+       DECLARE @ClassID INT
+       SELECT @ClassID = (select ClassID from RegisteredClasses where RegisteredClassID = @RegisteredClassID)
 
-      IF @Status != 0 AND @Status != 1
-      BEGIN;
-          throw 52000, N'Status should be equal to "1" to confirm access or "0" to cancel access', 1
-      END
-      BEGIN
-          UPDATE RegisteredClasses SET Access = @Status WHERE RegisteredClassID = @RegisteredClassID
-      END
-  END TRY
-  BEGIN CATCH
-    DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
-    THROW 52000, @msg, 1;
-  END CATCH
+       IF NOT EXISTS (SELECT 1 FROM RegisteredClasses WHERE RegisteredClassID = @RegisteredClassID)
+       BEGIN
+         THROW 50000, 'RegisteredClassID does not exist in the RegisteredClasses table.', 1;
+       END;
+
+       IF @Status != 0 AND @Status != 1
+       BEGIN;
+           throw 52000, N'Status should be equal to "1" to confirm access or "0" to cancel access', 1
+       END
+
+       -- To oznacza, że próbujemy ustawić dostęp dla zajęć stacjonarnych, które posiadają limit miejsc
+       IF @Status = 1 AND EXISTS (SELECT 1 FROM OfflineClasses where ClassID = @ClassID)
+       BEGIN
+           DECLARE @MaxParticipants INT
+           SELECT @MaxParticipants = (select MaxParticipants from OfflineClasses where ClassID = @ClassID)
+
+           IF (SELECT COUNT(*) FROM AllClassParticipants(@ClassID) WHERE Access = 'true') = @MaxParticipants
+           BEGIN
+                THROW 52313, N'Participants number over MaxParticipants number for this Classes', 1;
+           END
+       END
+       BEGIN
+           UPDATE RegisteredClasses SET Access = @Status WHERE RegisteredClassID = @RegisteredClassID
+       END
+   END TRY
+   BEGIN CATCH
+     DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
+     THROW 52000, @msg, 1;
+   END CATCH
 END
 ```
 ## 4. **Funkcje**
@@ -1914,12 +1940,12 @@ END;
 ### **7. Wyświetlanie harmonogramu zajęć na konkretny dzień dla konkretnego studenta**
 ```sql
 CREATE FUNCTION ScheduleForStudent(@StudentID int, @day DATE)
-   RETURNS TABLE
-       AS
-       RETURN
-       SELECT Student, ModuleName, SubjectName, Teacher, StartTime, EndTime, RoomNumber
-       FROM OfflineParticipantsList as ofp
-       WHERE @StudentID = ofp.StudentID and @day = cast(StartTime as date)
+    RETURNS TABLE
+        AS
+        RETURN
+        SELECT Student, ModuleName, SubjectName, Teacher, StartTime, EndTime, RoomNumber
+        FROM OfflineParticipantsList as ofp
+        WHERE @StudentID = ofp.StudentID and @day = cast(StartTime as date) and Access = 'true'
 ```
 
 ### **8. Obliczenie ilości zamówionych przez studentów programów w danym roku**
@@ -2161,17 +2187,17 @@ ON RegisteredClasses
 AFTER INSERT
 AS
 BEGIN
-   SET NOCOUNT ON
-   BEGIN
-       DECLARE @ClassID INT
-       DECLARE @MaxParticipants INT
-       SELECT @ClassID = ClassID FROM INSERTED
-       SELECT @MaxParticipants = MaxParticipants from OfflineClasses where ClassID = @ClassID
-       IF (SELECT COUNT(*) FROM AllClassParticipants(@ClassID)) > @MaxParticipants
-       BEGIN
-           THROW 52313, N'Participants number over MaxParticipants number for this Classes', 1;
-       END
-   END
+    SET NOCOUNT ON
+    BEGIN
+        DECLARE @ClassID INT
+        DECLARE @MaxParticipants INT
+        SELECT @ClassID = ClassID FROM INSERTED
+        SELECT @MaxParticipants = MaxParticipants from OfflineClasses where ClassID = @ClassID
+        IF (SELECT COUNT(*) FROM AllClassParticipants(@ClassID) WHERE Access = 'true') > @MaxParticipants
+        BEGIN
+            THROW 52313, N'Participants number over MaxParticipants number for this Classes', 1;
+        END
+    END
 END
 ```
 
@@ -2182,22 +2208,22 @@ ON RegisteredPrograms
 AFTER INSERT
 AS
 BEGIN
-   SET NOCOUNT ON
-   BEGIN
-       DECLARE @ProgramID INT
-       DECLARE @MaxParticipants INT
-       SELECT @ProgramID = ProgramID FROM INSERTED
-       IF (SELECT StudiesID from EducationalPrograms where ProgramID = @ProgramID) IS NOT NULL
-           SELECT @MaxParticipants = MaxParticipants
-                           from EducationalPrograms as ep
-                               inner join Studies as st
-                                   on ep.StudiesID = st.StudiesID
-                                   where ProgramID = @ProgramID
-           IF (SELECT COUNT(*) FROM AllProgramParticipants(@ProgramID)) > @MaxParticipants
-           BEGIN
-               THROW 52313, N'Participants number over MaxParticipants number for this Studies', 1;
-           END
-   END
+    SET NOCOUNT ON
+    BEGIN
+        DECLARE @ProgramID INT
+        DECLARE @MaxParticipants INT
+        SELECT @ProgramID = ProgramID FROM INSERTED
+        IF (SELECT StudiesID from EducationalPrograms where ProgramID = @ProgramID) IS NOT NULL
+            SELECT @MaxParticipants = MaxParticipants
+                            from EducationalPrograms as ep
+                                inner join Studies as st
+                                    on ep.StudiesID = st.StudiesID
+                                    where ProgramID = @ProgramID
+            IF (SELECT COUNT(*) FROM AllProgramParticipants(@ProgramID) WHERE Access = 'true') > @MaxParticipants
+            BEGIN
+                THROW 52313, N'Participants number over MaxParticipants number for this Studies', 1;
+            END
+    END
 END
 ```
 
@@ -2279,11 +2305,6 @@ ON Exams (StudentID);
 
 ## 7. **Uprawnienia**
 
-### **Administrator**
-```sql
-CREATE ROLE admin
-GRANT ALL PRIVILEGES ON u_smyka.dbo to admin
-```
 ### **Administrator**
 ```sql
 CREATE ROLE admin
