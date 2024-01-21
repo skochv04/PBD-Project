@@ -777,14 +777,14 @@ create view WebinarsInfo as select w.WebinarID, c.ClassID, s.SubjectName, t.Firs
 
 ### **13. Lista programów edukacyjnych, na które są zapisane studenty, wraz z numerem zamówienia, w którym dany program był zamówiony, datą rozpoczęcia i zakończenia programu oraz informacją o zaliczeniu.**
 ```sql
-create view StudentsPrograms as select s.StudentID, s.FirstName + ' ' + s.LastName as Student, rp.RegisteredProgramID, ep.ProgramID, ep.ProgramName, ep.ProgramStart, ep.ProgramEnd, rp.Passed
-   from Students as s
-       inner join Orders as o
-           on s.StudentID = o.StudentID
-       inner join RegisteredPrograms as rp
-           on o.OrderID = rp.OrderID
-       inner join EducationalPrograms as ep
-           on rp.ProgramID = ep.ProgramID
+create view StudentsPrograms as select s.StudentID, s.FirstName + ' ' + s.LastName as Student, rp.RegisteredProgramID, ep.ProgramID, ep.ProgramName, ep.ProgramStart, ep.ProgramEnd, rp.Access, rp.Passed
+    from Students as s
+        inner join Orders as o
+            on s.StudentID = o.StudentID
+        inner join RegisteredPrograms as rp
+            on o.OrderID = rp.OrderID
+        inner join EducationalPrograms as ep
+            on rp.ProgramID = ep.ProgramID
 ```
 ![StudentsPrograms](img/StudentsPrograms.png)
 
@@ -1927,20 +1927,7 @@ CREATE FUNCTION AverageMarkOnClass(@ClassID int)
 
 ```
 
-### **11. Wyświetlenie listy studiów, na które jest zapisany dany student. Funkcja wykorzystywana jest w procedurze #20 oraz triggerze #2.**
-```sql
-CREATE FUNCTION StudentStudies(@StudentID int)
-   RETURNS TABLE
-       AS
-       RETURN
-       select StudentID, Student, RegisteredProgramID, StudiesID, sp.ProgramName, sp.ProgramStart, sp.ProgramEnd, sp.Passed
-       from StudentsPrograms as sp
-           inner join EducationalPrograms as ep
-               on ep.ProgramID = sp.ProgramID
-       where @StudentID = sp.StudentID and StudiesID is not null
-```
-
-### **12. Funkcja sprawdzająca minimalnie możliwej liczby uczęstników zajęć w ramach modułu studiów (jeśli danę zajęcia są dodawane do studiów)**
+### **11. Funkcja sprawdzająca minimalnie możliwej liczby uczęstników zajęć w ramach modułu studiów (jeśli danę zajęcia są dodawane do studiów)**
 ```sql
 CREATE FUNCTION CalculateMinClassParticipantsForStudies(@ModuleID int)
 RETURNS INT
@@ -1958,43 +1945,36 @@ BEGIN
 END;
 ```
 
-### **13. Wyświetlenie listy osób zapisanych na dane offline-wydarzenie w ramach studiów**
+### **12. Wyświetlenie listy osób zapisanych na dane offline-wydarzenie w ramach studiów**
 ```sql
 CREATE FUNCTION AllClassParticipants(@ClassID int)
-   RETURNS TABLE
-       AS
-       RETURN
-       select distinct StudentID, Student, StudiesID
-       from StudentsPrograms as sp
-           inner join EducationalPrograms as ep
-               on ep.ProgramID = sp.ProgramID
-           inner join Modules as m
-               on ep.ProgramID = m.ProgramID
-           inner join Classes as c
-               on m.ModuleID = c.ModuleID
-           inner join OfflineClasses as ofl
-               on c.ClassID = ofl.ClassID and c.ClassID = @ClassID
-       where StudiesID is not null
-       UNION
-       select distinct s.StudentID, s.FirstName + ' ' + s.LastName as Student, ed.StudiesID
-       from Students as s
-           inner join Orders as o
-               on s.StudentID = o.StudentID
-           inner join RegisteredClasses as rc
-               on o.OrderID = rc.OrderID
-           inner join Classes as c
-               on rc.ClassID = c.ClassID
-           inner join OfflineClasses as ofl
-               on c.ClassID = ofl.ClassID
-           inner join Modules as m
-               on c.ModuleID = m.ModuleID
-           inner join EducationalPrograms as ed
-               on m.ProgramID = ed.ProgramID
-          where ed.StudiesID is not null and c.ClassID = @ClassID
+    RETURNS TABLE
+        AS
+        RETURN
+        with t as (
+        select c.ClassID, s.StudiesID
+        from Classes as c
+            inner join Modules as m
+                on m.ModuleID = c.ModuleID
+            inner join EducationalPrograms as ep
+                on m.ProgramID = ep.ProgramID
+            inner join Studies as s
+                on ep.StudiesID = s.StudiesID
+        )
+
+        select StudentID, Student, StudiesID
+            from OfflineParticipantsList
+                inner join t
+                    on t.ClassID = OfflineParticipantsList.ClassID and t.ClassID = @ClassID
+        UNION
+        select StudentID, Student, StudiesID
+            from StudentsOuterClasses
+                inner join t
+                    on t.ClassID = StudentsOuterClasses.ClassID and t.ClassID = @ClassID
 
 ```
 
-### **14. Wyświetlenie listy osób zapisanych na dany program**
+### **13. Wyświetlenie listy osób zapisanych na dany program**
 ```sql
 CREATE FUNCTION AllProgramParticipants(@ProgramID int)
    RETURNS TABLE
@@ -2006,6 +1986,46 @@ CREATE FUNCTION AllProgramParticipants(@ProgramID int)
                on ep.ProgramID = sp.ProgramID
        where ep.ProgramID = @ProgramID
 ```
+
+### **14. Wyświetlenie listy studiów, na które dany student jest zapisany i ma dostęp. Funkcja wykorzystywana jest w procedurze #18 oraz triggerze #2**
+```sql
+CREATE FUNCTION StudentStudies(@StudentID int)
+    RETURNS TABLE
+        AS
+        RETURN
+        select StudentID, Student, RegisteredProgramID, StudiesID, sp.ProgramName, sp.ProgramStart, sp.ProgramEnd, sp.Passed
+        from StudentsPrograms as sp
+            inner join EducationalPrograms as ep
+                on ep.ProgramID = sp.ProgramID
+        where @StudentID = sp.StudentID and StudiesID is not null and access = 'true'
+```
+
+### **15. Wyświetlenie listy webinarów, na które dany student jest zapisany i ma dostęp**
+```sql
+CREATE FUNCTION StudentWebinars(@StudentID int)
+    RETURNS TABLE
+        AS
+        RETURN
+        select StudentID, Student, RegisteredProgramID, WebinarID, sp.ProgramName, sp.ProgramStart, sp.ProgramEnd, sp.Passed
+        from StudentsPrograms as sp
+            inner join EducationalPrograms as ep
+                on ep.ProgramID = sp.ProgramID
+        where @StudentID = sp.StudentID and WebinarID is not null and access = 'true'
+```
+
+### **16. Wyświetlenie listy kursów, na które dany student jest zapisany i ma dostęp**
+```sql
+CREATE FUNCTION StudentCourses(@StudentID int)
+    RETURNS TABLE
+        AS
+        RETURN
+        select StudentID, Student, RegisteredProgramID, CourseID, sp.ProgramName, sp.ProgramStart, sp.ProgramEnd, sp.Passed
+        from StudentsPrograms as sp
+            inner join EducationalPrograms as ep
+                on ep.ProgramID = sp.ProgramID
+        where @StudentID = sp.StudentID and CourseID is not null and access = 'true'
+```
+
 
 ## 5. **Triggery**
 ### **1. Aktualiacja stanu zapłaty zamówienia po udanej transakcji w tabeli Payments.**
@@ -2273,6 +2293,8 @@ GRANT EXECUTE ON CalculateMinClassParticipantsForStudies to director
 GRANT SELECT ON ScheduleForStudent to director
 GRANT SELECT ON LiveOnlineSynchClasses to director
 GRANT SELECT ON StudentStudies to director
+GRANT SELECT ON StudentWebinars to director
+GRANT SELECT ON StudentCourses to director
 GRANT SELECT ON AllClassParticipants to director
 GRANT SELECT ON AllProgramParticipants to director
 ```
@@ -2326,6 +2348,8 @@ GRANT EXECUTE ON CalculateMinClassParticipantsForStudies to moderator
 GRANT SELECT ON ScheduleForStudent to moderator
 GRANT SELECT ON LiveOnlineSynchClasses to moderator
 GRANT SELECT ON StudentStudies to moderator
+GRANT SELECT ON StudentWebinars to moderator
+GRANT SELECT ON StudentCourses to moderator
 GRANT SELECT ON AllClassParticipants to moderator
 GRANT SELECT ON AllProgramParticipants to moderator
 ```
@@ -2384,6 +2408,8 @@ GRANT EXECUTE ON AverageMarkOnClass to student
 
 GRANT SELECT ON ScheduleForStudent to student
 GRANT SELECT ON StudentStudies to student
+GRANT SELECT ON StudentWebinars to student
+GRANT SELECT ON StudentCourses to student
 GRANT SELECT ON AllClassParticipants to student
 GRANT SELECT ON AllProgramParticipants to student
 ```
