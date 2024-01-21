@@ -87,6 +87,9 @@ Studia podobnie do kursów składają się z modułów (Modules), oraz posiadaj�
 
 Studenci mogą składać zamówienia (Orders) i przeglądać listę programów (RegisteredPrograms) oraz pojedynczych spotkań (RegisteredClasses), na które są zapisane.
 
+<div style="page-break-after: always;"></div>
+
+## 3. **Tabele**
 ```sql
 -- Table:  Translators
 CREATE TABLE  Translators (
@@ -96,10 +99,7 @@ CREATE TABLE  Translators (
    CountryID int  NOT NULL,
    CONSTRAINT Translator_pk PRIMARY KEY  (TranslatorID)
 );
-```
-<div style="page-break-after: always;"></div>
 
-```sql
 -- Table: Attendance
 -- Zawiera informacje dotyczące obecności konkretnych studentów z tabeli Students na zajęciach z tabeli Classes
 CREATE TABLE Attendance (
@@ -110,7 +110,6 @@ CREATE TABLE Attendance (
    Redone bit  NOT NULL DEFAULT 0,
    CONSTRAINT Attendance_pk PRIMARY KEY  (AttendanceID)
 );
-
 
 -- Table: Classes
 -- Pojedyncze spotkanie w ramach programu edukacyjnego (albo konkretnego modułu w przypadku kursów lub studiów), może być w formacie online lub offline
@@ -136,20 +135,6 @@ CREATE TABLE Countries (
    CONSTRAINT Countries_pk PRIMARY KEY  (CountryID)
 );
 
-
--- Table: Courses
-CREATE TABLE Courses (
-   CourseID int AUTO_INCREMENT NOT NULL,
-   Place varchar(40)  NOT NULL,
-   Advance money  NOT NULL,
-   CHECK (Advance >= 0),
-   CONSTRAINT Courses_pk PRIMARY KEY  (CourseID)
-);
-```
-
-<div style="page-break-after: always;"></div>
-
-```sql
 -- Table: EducationalPrograms
 -- Zawiera szczegóły konkretnego programu edukacyjnego, którym mogą być studia z tabeli Studies, kursy z tabeli Courses lub Webinary z tabeli Webinars, w każdym rekorcie tylko jedna z trzech wartości: StudiesID, WebinarID, CourseID nie jest NULL-em.
 CREATE TABLE EducationalPrograms (
@@ -169,6 +154,18 @@ CREATE TABLE EducationalPrograms (
    CONSTRAINT EducationalPrograms_pk PRIMARY KEY  (ProgramID)
 );
 
+```
+<div style="page-break-after: always;"></div>
+
+```sql
+-- Table: Courses
+CREATE TABLE Courses (
+   CourseID int AUTO_INCREMENT NOT NULL,
+   Place varchar(40)  NOT NULL,
+   Advance money  NOT NULL,
+   CHECK (Advance >= 0),
+   CONSTRAINT Courses_pk PRIMARY KEY  (CourseID)
+);
 
 -- Table: Exams
 -- Zawiera wyniki z egzaminów dla studentów (Tabela Students) zapisanych na studia(Tabela Studies)
@@ -180,11 +177,7 @@ CREATE TABLE Exams (
    CHECK(Mark >= 0 AND Mark <= 100),
    CONSTRAINT Exams_pk PRIMARY KEY  (ExamID)
 );
-```
 
-<div style="page-break-after: always;"></div>
-
-```sql
 -- Table: Modules
 -- Zbiór zajęć na określony temat, nie tożsamy z pojęciem przedmiotu (jeden moduł może zawierać zajęcia z różnych przedmiotów). Pozwalają na łączenie zajęć różnej formy kształcenia (stacjonarne, online asynchroniczne, online synchroniczne, hybrydowe).
 -- Dla przykładu:
@@ -220,6 +213,7 @@ CREATE TABLE OnlineClasses (
    Synch bit  NOT NULL DEFAULT 0,
    CONSTRAINT OnlineClasses_pk PRIMARY KEY  (OnlineClassID)
 );
+
 ```
 
 <div style="page-break-after: always;"></div>
@@ -236,7 +230,6 @@ CREATE TABLE Orders (
    CONSTRAINT Orders_pk PRIMARY KEY  (OrderID)
 );
 
-
 -- Table: Payments
 -- Spis płatność dokonanych w celu częściowego lub całkowitego opłacenia zamówienia z tabeli Orders. Kolumna Status informuje czy płatność została zakończona sukcesem, natomiast kolumna SystemPaymentID zawiera link do zewnętrznego systemu płatności.
 CREATE TABLE Payments (
@@ -249,9 +242,8 @@ CREATE TABLE Payments (
    CONSTRAINT Payments_pk PRIMARY KEY  (PaymentID)
 );
 
-
 -- Table: Practises
--- Każde studia mogą zawierać wiele praktyk, tabela przetrzymuje opis i identyfikator danych praktyk. W Tabeli Classes znajduje się pole PracticeID, które nie jest NULL-em w przypadku gdy dane zajęcia realizują dane praktyki.
+-- Każde studia mogą zawierać wiele praktyk, tabela przetrzymuje opis i identyfikator danych praktyk. W Classes znajduje się pole PracticeID, które nie jest NULL-em w przypadku gdy dane zajęcia realizują dane praktyki.
 CREATE TABLE Practises (
    PractiseID int AUTO_INCREMENT NOT NULL,
    StudiesID int  NOT NULL,
@@ -259,12 +251,7 @@ CREATE TABLE Practises (
    PracticeDescription varchar(255)  NOT NULL,
    CONSTRAINT Practices_pk PRIMARY KEY  (PractiseID)
 );
-```
 
-<div style="page-break-after: always;"></div>
-
-
-```sql
 -- Table: RegisteredClasses
 -- Lista zakupionych przez studentów pojedynczych classes (zjazdów w ramach studiów) z numerami zamówienia
 CREATE TABLE RegisteredClasses (
@@ -274,7 +261,6 @@ CREATE TABLE RegisteredClasses (
    Access bit NOT NULL DEFAULT 0,
    CONSTRAINT RegisteredClasses_pk PRIMARY KEY  (RegisteredClassID)
 );
-
 
 -- Table: RegisteredPrograms
 -- Lista zakupionych przez studentów EducationalProgramów z numerami zamówienia
@@ -288,6 +274,29 @@ CREATE TABLE RegisteredPrograms (
    CONSTRAINT RegisteredPrograms_pk PRIMARY KEY  (RegisteredProgramID)
 );
 
+-- Table: SubjectCategories
+-- Zawiera kategorie różnych prowadzonych przedmiotów z tabeli Subjects, np. Matematyka(SubjectCategories) jest kategorią przedmiotu algebra(Subjects)
+CREATE TABLE SubjectCategories (
+   CategoryID int AUTO_INCREMENT NOT NULL,
+   CategoryName varchar(40)  NOT NULL UNIQUE,
+   Description varchar(255)  NOT NULL,
+   CONSTRAINT SubjectCategories_pk PRIMARY KEY  (CategoryID)
+);
+```
+
+<div style="page-break-after: always;"></div>
+
+```sql
+-- Table: Studies
+CREATE TABLE Studies (
+   StudiesID int AUTO_INCREMENT NOT NULL,
+   Syllabus varchar(255)  NOT NULL,
+   Place varchar(100)  NOT NULL,
+   MaxParticipants int  NOT NULL,
+   EntryFee money  NOT NULL
+   CHECK (EntryFee >= 0),
+   CONSTRAINT Studies_pk PRIMARY KEY  (StudiesID)
+);
 
 -- Table: Students
 CREATE TABLE Students (
@@ -299,33 +308,6 @@ CREATE TABLE Students (
    CONSTRAINT Students_pk PRIMARY KEY  (StudentID)
 );
 
-
--- Table: Studies
-CREATE TABLE Studies (
-   StudiesID int AUTO_INCREMENT NOT NULL,
-   Syllabus varchar(255)  NOT NULL,
-   Place varchar(100)  NOT NULL,
-   MaxParticipants int  NOT NULL,
-   EntryFee money  NOT NULL
-   CHECK (EntryFee >= 0),
-   CONSTRAINT Studies_pk PRIMARY KEY  (StudiesID)
-);
-```
-
-<div style="page-break-after: always;"></div>
-
-```sql
--- Table: SubjectCategories
--- Zawiera kategorie różnych prowadzonych przedmiotów z tabeli Subjects
--- np. Matematyka(SubjectCategories) jest kategorią przedmiotu algebra(Subjects)
-CREATE TABLE SubjectCategories (
-   CategoryID int AUTO_INCREMENT NOT NULL,
-   CategoryName varchar(40)  NOT NULL UNIQUE,
-   Description varchar(255)  NOT NULL,
-   CONSTRAINT SubjectCategories_pk PRIMARY KEY  (CategoryID)
-);
-
-
 -- Table: Subjects
 CREATE TABLE Subjects (
    SubjectID int AUTO_INCREMENT NOT NULL,
@@ -334,7 +316,6 @@ CREATE TABLE Subjects (
    SubjectName varchar(40)  NOT NULL UNIQUE,
    CONSTRAINT Subjects_pk PRIMARY KEY  (SubjectID)
 );
-
 
 -- Table: Teachers
 CREATE TABLE Teachers (
@@ -345,14 +326,12 @@ CREATE TABLE Teachers (
    CONSTRAINT Teachers_pk PRIMARY KEY  (TeacherID)
 );
 
-
 -- Table: Webinars
 CREATE TABLE Webinars (
    WebinarID int AUTO_INCREMENT NOT NULL,
    ClassID int  NOT NULL,
    CONSTRAINT Webinars_pk PRIMARY KEY  (WebinarID)
 );
-
 
 -- foreign keys
 -- Reference:  Translators_Countries (table:  Translators)
@@ -524,7 +503,7 @@ ALTER TABLE Webinars ADD CONSTRAINT Webinars_Classes
 
 <div style="page-break-after: always;"></div>
 
-## 3. **Widoki**
+## 4. **Widoki**
 
 ### **1. Raporty finansowe – zestawienie przychodów dla każdego webinaru/kursu/studium**
 ```sql
@@ -552,6 +531,8 @@ GROUP BY Courses.CourseID, EducationalPrograms.ProgramName, EducationalPrograms.
 ```
 ![CoursesRevenue](img/CoursesRevenue.png)
 
+<div style="page-break-after: always;"></div>
+
 ```sql
 -- Studies
 CREATE VIEW StudiesRevenue AS SELECT Studies.StudiesID, EducationalPrograms.ProgramName, EducationalPrograms.ProgramStart as StudiesStart, EducationalPrograms.ProgramEnd as StudiesEnd, COALESCE(SUM(Payments.Amount),0) AS Revenue
@@ -568,7 +549,7 @@ GROUP BY Studies.StudiesID, EducationalPrograms.ProgramName, EducationalPrograms
 ```
 ![StudiesRevenue](img/StudiesRevenue.png)
 
-<div style="page-break-after: always;"></div>
+
 
 ### **2. Lista „dłużników” – osoby, które skorzystały z usług, ale nie uiściły opłat.**
 ```sql
@@ -640,6 +621,8 @@ from EducationalPrograms
 ```
 ![NumOfInterestedInFutureEducationalPrograms](img/NumOfInterestedInFutureEducationalPrograms.png)
 
+<div style="page-break-after: always;"></div>
+
 ### **5. Ogólny raport dotyczący listy osób listy osób zapisanych na stacjonarne zajęcia w ramach programu edukacyjnego.**
 ```sql
 
@@ -676,6 +659,8 @@ LEFT OUTER JOIN Students on Students.StudentID = A.ParticipantID
 ```
 ![AttendanceAllClasses](img/AttendanceAllClasses.png)
 
+<div style="page-break-after: always;"></div>
+
 ### **7. Raport bilokacji: Lista kolidujących się zajęć wraz z informacją o studencie, ID zajęć oraz kolidyjącymi się terminami.**
 ```sql
 CREATE VIEW BilocationsList as select distinct s.StudentID, s.FirstName + ' ' + s.LastName as Student, a.ClassID as a_ClassID, a.StartTime as a_StartTime, a.EndTime as a_EndTime, b.ClassID as b_ClassID, b.StartTime as b_StartTime, b.EndTime as b_EndTime from Students as s
@@ -709,7 +694,7 @@ group by c.ClassID, c.TeacherID, t.FirstName + ' ' + t.LastName, sub.SubjectName
 ```
 ![NumberOfParticipations](img/NumberOfParticipations.png)
 
-
+<div style="page-break-after: always;"></div>
 
 ### **9. Dane o każdym przeprowadzonym egzaminie, które zawierają ocenę, ID studenta, ID studiów, ID programu edukacyjnego oraz terminy rozpoczęcia & zakończenia danych studiów**
 ```sql
@@ -742,6 +727,7 @@ create view StudiesSubjectsInfo as select ed.ProgramID, ed.ProgramName, m.Module
 ```
 ![StudiesSubjectsInfo](img/StudiesSubjectsInfo.png)
 
+<div style="page-break-after: always;"></div>
 
 ### **11. Lista przedmiotów prowadzonych w ramach modułów pewnych kursów wraz z informacją o kategorii oraz prowadzącym zajęcia z danego przedmiotu**
 ```sql
@@ -774,6 +760,8 @@ create view WebinarsInfo as select w.WebinarID, c.ClassID, s.SubjectName, t.Firs
        inner join Subjects as s on C.SubjectID = s.SubjectID
 ```
 ![WebinarsInfo](img/WebinarsInfo.png)
+
+<div style="page-break-after: always;"></div>
 
 ### **13. Lista programów edukacyjnych, na które są zapisane studenty, wraz z numerem zamówienia, w którym dany program był zamówiony, datą rozpoczęcia i zakończenia programu oraz informacją o zaliczeniu.**
 ```sql
@@ -815,7 +803,7 @@ create view StudentsOuterClasses as select s.StudentID, s.FirstName + ' ' + s.La
 
 <div style="page-break-after: always;"></div>
 
-## 4. **Procedury**
+## 5. **Procedury**
 
 ### **1. Dodanie nowego Studenta**
 ```sql
@@ -843,8 +831,38 @@ BEGIN
    END CATCH
 END
 ```
+### **2. Usuwanie danych studenta**
+```sql
+ALTER PROCEDURE DeleteStudent(@studentID INT)
+AS
+BEGIN
+   BEGIN TRY
+       IF NOT EXISTS(
+               SELECT *
+               FROM Students
+               WHERE StudentID = @studentID
+           )
+           BEGIN
+               THROW 52000, N'There is no student with given ID', 1;
+           END
+           DECLARE @an NVARCHAR(10) = 'xxxxxxxx'
+           UPDATE Students
+               SET FirstName   = @an,
+               LastName    = @an,
+               Email     = @an
+           WHERE StudentID = @studentID
+   END TRY
+   BEGIN CATCH
+       DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
+       THROW 52000, @msg, 1;
+   END CATCH
+END
+```
 
-### **2. Dodanie nowego kursu**
+
+<div style="page-break-after: always;"></div>
+
+### **3. Dodanie nowego kursu**
 ```sql
 CREATE PROCEDURE AddCourse
    @Place varchar(40),
@@ -874,7 +892,6 @@ BEGIN TRY
    INSERT INTO Courses (Place, Advance)
    VALUES (@Place, @Advance);
 
-
    INSERT INTO EducationalPrograms (ProgramName, CourseID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
    VALUES (@NewProgramID, @ProgramName, @NewCourseID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
 
@@ -889,41 +906,8 @@ END CATCH
 END;
 ```
 
-<div style="page-break-after: always;"></div>
-
-### **3. Usuwanie danych studenta**
-```sql
-
-ALTER PROCEDURE DeleteStudent(@studentID INT)
-AS
-BEGIN
-   BEGIN TRY
-       IF NOT EXISTS(
-               SELECT *
-               FROM Students
-               WHERE StudentID = @studentID
-           )
-           BEGIN
-               THROW 52000, N'There is no student with given ID', 1;
-           END
-           DECLARE @an NVARCHAR(10) = 'xxxxxxxx'
-           UPDATE Students
-               SET FirstName   = @an,
-               LastName    = @an,
-               Email     = @an
-           WHERE StudentID = @studentID
-   END TRY
-   BEGIN CATCH
-       DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
-       THROW 52000, @msg, 1;
-   END CATCH
-END
-```
-
-
 ### **4. Aktualizacja danych studenta (tylko email albo country)**
 ```sql
-
 CREATE PROCEDURE ChangeStudentData(
   @studentID int,
   @countryID int = NULL,
@@ -969,40 +953,42 @@ END
 
 ### **6. Oznaczenie odrobienia nieobecności na zajęciach przez studenta**
 ```sql
-	
-create procedure redoAttendance @classID int, @studentID int
-as
-begin
-   set nocount on
-   begin try
-       if not exists
+CREATE PROCEDURE redoAttendance (
+    @classID int, 
+    @studentID int
+    )
+AS
+BEGIN
+   SET NOCOUNT ON
+   BEGIN TRY
+       IF NOT EXISTS
            (
-           select ClassID, ParticipantID
+            select ClassID, ParticipantID
                from Attendance
            WHERE ClassID = @classID and ParticipantID = @studentID
            )
-       begin;
-           throw 52000, N'The student was not registered for the class with the given ID', 1
-       end
-       if exists
+       BEGIN
+           THROW 52000, N'The student was not registered for the class with the given ID', 1
+       END
+       IF EXISTS
            (
            select ClassID, ParticipantID
                from Attendance
            WHERE ClassID = @classID and ParticipantID = @studentID and Redone = 1
            )
-       begin;
-           throw 52000, N'Attendance had already been made up earlier', 1
-       end
-       update Attendance
-       set Redone = 1
+       BEGIN
+           THROW 52000, N'Attendance had already been made up earlier', 1
+       END
+       UPDATE Attendance
+       SET Redone = 1
        where ClassID = @classID and ParticipantID = @studentID
-       print 'Attendance was successfully set as redone!'
-   end try
-   begin catch
-       declare @error varchar(1000)= 'Error when setting attendance as made up: ' + ERROR_MESSAGE();
-       throw 77777, @error, 1
-   end catch
-end
+       PRINT 'Attendance was successfully set as redone!'
+   END TRY
+   BEGIN CATCH
+       DECLARE @Message NVARCHAR(1000)= 'Error when setting attendance as made up: ' + ERROR_MESSAGE();
+       THROW 52011, @Message, 1
+   END CATCH
+END
 ```
 
 <div style="page-break-after: always;"></div>
@@ -1035,7 +1021,6 @@ END
 ```
 ### **8. Dodanie pojedynczych zajęć do zamówienia**
 ```sql
-
 CREATE PROCEDURE RegisterClass(
    @OrderID INT,
    @ClassID INT
@@ -1064,15 +1049,12 @@ BEGIN
       THROW 52011, @Message, 1;
   END CATCH
 END
-
-
 ```
 
 <div style="page-break-after: always;"></div>
 
 ### **9. Dodawanie programu edukacyjnego do zamówienia**
 ```sql
-
 CREATE PROCEDURE RegisterProgram(
  @OrderID INT,
  @ProgramID INT,
@@ -1123,7 +1105,6 @@ BEGIN
  SET NOCOUNT ON;
  BEGIN TRY
      BEGIN TRANSACTION
-
      IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @TeacherID)
      BEGIN
          THROW 50000, 'TeacherID does not exist in the Teachers table.', 1;
@@ -1164,7 +1145,6 @@ BEGIN
      BEGIN
          UPDATE Classes SET PractiseID = @PractiseID WHERE ClassID = @NewClassID
      END;
-
      COMMIT TRANSACTION
      PRINT 'OnlineClass added successfully.';
  END TRY
@@ -1174,12 +1154,10 @@ BEGIN
      THROW 52000, @msg, 1;
  END CATCH
 END;
-
 ```
 
 ### **11. Dodanie nowego pojedynczego stacjonarnego zajęcia**
 ```sql
-
 CREATE PROCEDURE AddOfflineClass
   @RoomNumber int,
   @MaxParticipants int,
@@ -1191,63 +1169,49 @@ CREATE PROCEDURE AddOfflineClass
   @ModuleID int,
   @PractiseID int = NULL,
   @NewClassID int OUTPUT
-
 AS
 BEGIN
   SET NOCOUNT ON;
-
   BEGIN TRY
       BEGIN TRANSACTION
-
       IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @TeacherID)
       BEGIN
           THROW 50000, 'TeacherID does not exist in the Teachers table.', 1;
       END;
-
 
       IF NOT EXISTS (SELECT 1 FROM Subjects WHERE SubjectID = @SubjectID)
       BEGIN
           THROW 50000, 'SubjectID does not exist in the Subjects table.', 1;
       END;
 
-
       IF @ModuleID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Modules WHERE ModuleID = @ModuleID)
       BEGIN
           THROW 50000, 'ModuleID does not exist in the Modules table.', 1;
       END;
-
 
       IF @PractiseID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Practises WHERE PractiseID = @PractiseID)
       BEGIN
           THROW 50000, 'PractiseID does not exist in the Practises table.', 1;
       END;
 
+      -- Sprawdzenie, czy w ramach tych studiów można dodać zajęcia z taką maksymalną ilością miejsc (musi ona być większa bądż równa od maksymalnej ilości miejsc dla studiów, żeby wszystkie studenty mogli się zmieszcić, a dodatkowo mogą pojawić się miejsca dla osób "z zewnątrz"
 
-      -- Sprawdzenie, czy w ramach tych studiów można dodać zajęcia z taką maksymalną ilością miejsc
-      -- (musi ona być większa bądż równa od maksymalnej ilości miejsc dla studiów, żeby wszystkie studenty
-      -- mogli się zmieszcić, a dodatkowo mogą pojawić się miejsca dla osób "z zewnątrz"
       DECLARE @MinParticipants INT;
       SET @MinParticipants = dbo.CalculateMinClassParticipantsForStudies (@ModuleID);
-
 
       IF @MaxParticipants < @MinParticipants
       BEGIN
           THROW 50000, 'MaxParticipants of class should be greater or equal to MaxParticipants of studies within which classes take place.', 1;
       END;
-
       INSERT INTO Classes (TeacherID, SubjectID, StartTime, EndTime, ClassPrice, ModuleID)
       VALUES (@TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID);
 
-
       INSERT INTO OfflineClasses (RoomNumber, MaxParticipants)
       VALUES (@RoomNumber, @MaxParticipants)
-
-
       IF @PractiseID IS NOT NULL
       BEGIN
           UPDATE Classes SET PractiseID = @PractiseID WHERE ClassID = @NewClassID
       END;
-
       COMMIT TRANSACTION
       PRINT 'OfflineClass added successfully.';
   END TRY
@@ -1261,7 +1225,6 @@ END;
 
 ### **12. Dodanie nowego webinaru**
 ```sql
-
 CREATE PROCEDURE AddWebinar
   @ProgramName varchar(100),
   @Language varchar(20),
@@ -1296,12 +1259,10 @@ BEGIN
           THROW 50000, 'LecturerID does not exist in the Teachers table.', 1;
       END;
 
-
       IF @TranslatorID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Translators WHERE TranslatorID = @TranslatorID)
       BEGIN
           THROW 50000, 'TranslatorID does not exist in the Translators table.', 1;
       END;
-
 
       EXEC AddOnlineClass @Link, @Synch, @LecturerID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID, @PractiseID, @NewClassID OUTPUT
 
@@ -1312,7 +1273,6 @@ BEGIN
 
       INSERT INTO EducationalPrograms (ProgramName, WebinarID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
       VALUES (@ProgramName, @NewWebinarID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
-
 
       COMMIT TRANSACTION
       PRINT 'Webinar added successfully.';
@@ -1325,10 +1285,11 @@ BEGIN
 END;
 
 ```
+<div style="page-break-after: always;"></div>
+
 
 ### **13. Dodanie nowego kursu**
 ```sql
-
 CREATE PROCEDURE AddCourse
   @ProgramName varchar(100),
   @Language varchar(20),
@@ -1381,10 +1342,11 @@ BEGIN
 END;
 
 ```
+<div style="page-break-after: always;"></div>
+
 
 ### **14. Dodanie nowych studiów**
 ```sql
-
 CREATE PROCEDURE AddStudies
   @ProgramName varchar(100),
   @Language varchar(20),
@@ -1436,14 +1398,12 @@ BEGIN
       THROW 52000, @msg, 1;
   END CATCH
 END;
-
 ```
 
 <div style="page-break-after: always;"></div>
 
 ### **15. Zmiana szczegółów programu edukacyjnego**
 ```sql
-
 CREATE PROCEDURE UpdateEducationalProgram
    @ProgramID INT,
    @NewProgramName VARCHAR(100) = NULL,
@@ -1473,7 +1433,6 @@ BEGIN
           @IsWebinar = IIF(EXISTS (SELECT 1 FROM EducationalPrograms WHERE ProgramID = @ProgramID and WebinarID IS NOT NULL), 1, 0),
           @IsStudies = IIF(EXISTS (SELECT 1 FROM EducationalPrograms WHERE ProgramID = @ProgramID and StudiesID IS NOT NULL), 1, 0)
 
-
    IF @IsStudies = 1 AND (@NewSyllabus IS NOT NULL OR @NewStudiesPlace IS NOT NULL OR @NewMinParticipants IS NOT NULL OR @NewEntryFee IS NOT NULL)
    BEGIN
        UPDATE Studies
@@ -1488,7 +1447,6 @@ BEGIN
    ELSE IF @IsStudies = 0 AND (@NewSyllabus IS NOT NULL OR @NewStudiesPlace IS NOT NULL OR @NewMinParticipants IS NOT NULL OR @NewEntryFee IS NOT NULL)
        THROW 52313, N'EducationalProgram is not ranked in Studies', 10;
 
-
    ELSE IF @IsCourse = 1 AND (@NewCoursesPlace IS NOT NULL OR @NewAdvance IS NOT NULL)
    BEGIN
        UPDATE Courses
@@ -1500,7 +1458,6 @@ BEGIN
    END
    ELSE IF @IsCourse = 0 AND (@NewCoursesPlace IS NOT NULL OR @NewAdvance IS NOT NULL)
        THROW 52313, N'EducationalProgram is not ranked in Courses', 10;
-
 
    ELSE IF @IsWebinar = 1 AND @NewClassID IS NOT NULL
    BEGIN
@@ -1514,7 +1471,6 @@ BEGIN
    END
    ELSE IF @IsWebinar = 0 AND @NewClassID IS NOT NULL
        THROW 52313, N'EducationalProgram is not ranked in Webinars', 10;
-
 
    IF (@NewProgramName IS NOT NULL OR @NewLanguage IS NOT NULL OR @NewProgramStart IS NOT NULL OR
        @NewProgramEnd IS NOT NULL OR @NewProgramPrice IS NOT NULL OR @NewLecturerID IS NOT NULL OR
@@ -1547,7 +1503,6 @@ END;
 
 ### **16. Dodanie Płatności do złożonego zamówienia**
 ```sql
-
 CREATE PROCEDURE AddPayment
    @OrderID INT,
    @SystemPaymentID VARCHAR(255),
@@ -1563,21 +1518,18 @@ BEGIN
            DECLARE @price INT;
            IF @PayFull = 1
            BEGIN
-           SELECT @price = dbo.CalculateFullPriceForOrder(@OrderID)
+             SELECT @price = dbo.CalculateFullPriceForOrder(@OrderID)
            END
 
            ELSE
            BEGIN
-           SELECT @price = dbo.CalculateEntryPriceForOrder(@OrderID)
+             SELECT @price = dbo.CalculateEntryPriceForOrder(@OrderID)
            END
 
-           FROM Payments
            INSERT INTO Payments (OrderId, Amount, Date, Status, SystemPaymentID )
            VALUES (@OrderID, @price, GETDATE(), 0, @SystemPaymentID)
        END
    END TRY
-
-
    BEGIN CATCH
        DECLARE @ErrorMessage NVARCHAR(1000) = N'Error: ' + ERROR_MESSAGE();
        THROW 52011, @ErrorMessage, 1;
@@ -1696,6 +1648,7 @@ CREATE PROCEDURE SetExamMark(
       END CATCH
    END
 ```
+<div style="page-break-after: always;"></div>
 
 ### **19. "Jawna" zmiana statusu dostępu do programu edukacyjnego, którą jawnie ustawiać może wyłącznie dyrektor szkoły.**
 ```sql
@@ -1739,6 +1692,7 @@ BEGIN
    END CATCH
 END
 ```
+<div style="page-break-after: always;"></div>
 
 ### **20. "Jawna" zmiana statusu dostępu do pojedynczych zajęć, którą jawnie ustawiać może wyłącznie dyrektor szkoły.**
 ```sql
@@ -1783,11 +1737,12 @@ BEGIN
    END CATCH
 END
 ```
+<div style="page-break-after: always;"></div>
+
 ## 4. **Funkcje**
 
 ### **1. Obliczanie średniej ocen dla studenta**
 ```sql
-
 CREATE FUNCTION CalculateAverageGradeForStudent
 (
   @StudentID int,
@@ -1808,7 +1763,6 @@ END;
 
 ### **2. Liczba studentów obecnych na zajęciach**
 ```sql
-
 CREATE FUNCTION GetClassAttendanceCount
 (
    @ClassID INT
@@ -1820,11 +1774,9 @@ BEGIN
        BEGIN
        DECLARE @AttendanceCount INT;
 
-
        SELECT @AttendanceCount = COUNT(*)
        FROM Attendance
        WHERE ClassID = @ClassID AND Present = 1
-
 
        RETURN @AttendanceCount;
    END
@@ -1834,7 +1786,6 @@ END;
 
 ### **3. Obliczanie ilości dni pozostałych do zakończenia programu edukacyjnego**
 ```sql
-
 CREATE FUNCTION DaysRemainingInProgram
 (
    @ProgramID INT
@@ -1848,15 +1799,12 @@ BEGIN
    FROM EducationalPrograms
    WHERE ProgramID = @ProgramID;
 
-   -- Jeżeli program już się zakończył, zwróć 0
-   IF @DaysRemaining < 0
+   IF @DaysRemaining < 0 -- Jeżeli program już się zakończył, zwróć 0
        SET @DaysRemaining = 0;
 
    RETURN @DaysRemaining;
 END;
 ```
-
-
 
 ### **4. Obliczanie sumy pełnych kwot za wszystkie programy na danym zamówieniu**
 
@@ -1912,10 +1860,10 @@ BEGIN
 
 END;
 ```
+<div style="page-break-after: always;"></div>
 
 ### **6. Obliczanie łącznej kwoty wydanej przez danego studenta na Programy edukacyjne za konkretny okres czasowy**
 ```sql
-
 CREATE FUNCTION CalculateTotalPaymentsForStudent
 (
   @StudentID int,
@@ -1933,8 +1881,6 @@ BEGIN
   
   RETURN ISNULL(@TotalPayments, 0);
 END;
-
-
 ```
 
 ### **7. Wyświetlanie harmonogramu zajęć na konkretny dzień dla konkretnego studenta**
@@ -1974,6 +1920,7 @@ CREATE FUNCTION LiveOnlineSynchClasses()
            INNER JOIN Classes as c on oc.ClassID = c.ClassID
            WHERE oc.Synch = 'true' AND GETDATE() between c.StartTime AND c.EndTime
 ```
+<div style="page-break-after: always;"></div>
 
 ### **10. Obliczenie średniej oceny na pojedynczych zajęciach (tylko w przypadku, gdy ocenę wystawiono każdemu uczestnikowi zajęć)**
 ```sql
@@ -1986,7 +1933,6 @@ CREATE FUNCTION AverageMarkOnClass(@ClassID int)
        ELSE set @Average = null
        RETURN @Average
    END
-
 ```
 
 ### **11. Funkcja sprawdzająca minimalnie możliwej liczby uczęstników zajęć w ramach modułu studiów (jeśli danę zajęcia są dodawane do studiów)**
@@ -2033,8 +1979,9 @@ CREATE FUNCTION AllClassParticipants(@ClassID int)
             from StudentsOuterClasses
                 inner join t
                     on t.ClassID = StudentsOuterClasses.ClassID and t.ClassID = @ClassID
-
 ```
+
+<div style="page-break-after: always;"></div>
 
 ### **13. Wyświetlenie listy osób zapisanych na dany program**
 ```sql
@@ -2088,8 +2035,9 @@ CREATE FUNCTION StudentCourses(@StudentID int)
         where @StudentID = sp.StudentID and CourseID is not null and access = 'true'
 ```
 
+<div style="page-break-after: always;"></div>
 
-## 5. **Triggery**
+## 6. **Triggery**
 ### **1. Aktualizacja stanu zapłaty zamówienia po udanej transakcji w tabeli Payments, oraz nadanie dostępu po opłaceniu wpisowych**
 ```sql
 ALTER TRIGGER trg_UpdateOrderStatus
@@ -2152,9 +2100,8 @@ BEGIN
       END
   END
 END;
-
 ```
-
+<div style="page-break-after: always;"></div>
 
 ### **2. Ustawienie statusu zaliczenia konkretnych studiów konkretnego studenta w przypadku aktualizacji/dodawaniu jego oceny za egzamin, która musi mieścić się w zakresie od 50% do 100%.**
 ```sql
@@ -2172,9 +2119,7 @@ BEGIN
        SELECT @StudentID = StudentID FROM INSERTED
        UPDATE RegisteredPrograms set Passed = 'true'
        WHERE RegisteredPrograms.RegisteredProgramID in
-             (select ss.RegisteredProgramID
-              from StudentStudies(@StudentID) as ss
-               where ss.StudiesID = @StudiesID)
+         (select ss.RegisteredProgramID from StudentStudies(@StudentID) as ss where ss.StudiesID = @StudiesID)
    END
 END
 ```
@@ -2214,11 +2159,8 @@ BEGIN
         DECLARE @MaxParticipants INT
         SELECT @ProgramID = ProgramID FROM INSERTED
         IF (SELECT StudiesID from EducationalPrograms where ProgramID = @ProgramID) IS NOT NULL
-            SELECT @MaxParticipants = MaxParticipants
-                            from EducationalPrograms as ep
-                                inner join Studies as st
-                                    on ep.StudiesID = st.StudiesID
-                                    where ProgramID = @ProgramID
+            SELECT @MaxParticipants = MaxParticipants from EducationalPrograms as ep 
+                inner join Studies as st on ep.StudiesID = st.StudiesID and ProgramID = @ProgramID
             IF (SELECT COUNT(*) FROM AllProgramParticipants(@ProgramID) WHERE Access = 'true') > @MaxParticipants
             BEGIN
                 THROW 52313, N'Participants number over MaxParticipants number for this Studies', 1;
@@ -2226,9 +2168,9 @@ BEGIN
     END
 END
 ```
+<div style="page-break-after: always;"></div>
 
-
-## 6. **Indeksy**
+## 7. **Indeksy**
 ```sql
 CREATE INDEX idx_student_firstname_lastname
 ON Students (FirstName, LastName);
@@ -2293,17 +2235,12 @@ ON Attendance (ClassID);
 CREATE INDEX idx_attendance_participantID
 ON Attendance (ParticipantID);
 
-CREATE INDEX idx_Classes_ModuleID
-ON Classes (ModuleID)
+CREATE INDEX idx_Classes_ModuleID ON Classes (ModuleID)
 
-CREATE INDEX idx_Payments_OrderID
-ON Payments (OrderID)
-
-CREATE INDEX idx_exam_studentID
-ON Exams (StudentID);
+CREATE INDEX idx_Payments_OrderID ON Payments (OrderID)
 ```
 
-## 7. **Uprawnienia**
+## 8. **Uprawnienia**
 
 ### **Administrator**
 ```sql
@@ -2332,7 +2269,6 @@ GRANT SELECT ON WebinarsInfo to director
 GRANT SELECT ON StudentsPrograms to director
 GRANT SELECT ON StudentsOuterClasses to director
 
-
 GRANT EXECUTE ON AddStudent to director
 GRANT EXECUTE ON DeleteStudent to director
 GRANT EXECUTE ON AddCourse to director
@@ -2348,7 +2284,6 @@ GRANT EXECUTE ON SetProgramAccess to director
 GRANT EXECUTE ON SetClassesAccess to director
 GRANT EXECUTE ON SetExamMark to director
 
-
 GRANT EXECUTE ON CalculateAverageGradeForStudent to director
 GRANT EXECUTE ON GetClassAttendanceCount to director
 GRANT EXECUTE ON DaysRemainingInProgram to director
@@ -2358,7 +2293,6 @@ GRANT EXECUTE ON OrdersProgramsAmount to director
 GRANT EXECUTE ON AverageMarkOnClass to director
 GRANT EXECUTE ON CalculateMinClassParticipantsForStudies to director
 
-
 GRANT SELECT ON ScheduleForStudent to director
 GRANT SELECT ON LiveOnlineSynchClasses to director
 GRANT SELECT ON StudentStudies to director
@@ -2367,6 +2301,8 @@ GRANT SELECT ON StudentCourses to director
 GRANT SELECT ON AllClassParticipants to director
 GRANT SELECT ON AllProgramParticipants to director
 ```
+<div style="page-break-after: always;"></div>
+
 ### **Pracownik systemow (moderator)**
 ```sql
 CREATE ROLE moderator
@@ -2389,7 +2325,6 @@ GRANT SELECT ON StudiesSubjectsInfo to moderator
 GRANT SELECT ON StudentsPrograms to moderator
 GRANT SELECT ON StudentsOuterClasses to moderator
 
-
 GRANT EXECUTE ON AddStudent to moderator
 GRANT EXECUTE ON DeleteStudent to moderator
 GRANT EXECUTE ON AddCourse to moderator
@@ -2403,7 +2338,6 @@ GRANT EXECUTE ON AddStudies to moderator
 GRANT EXECUTE ON UpdateEducationalProgram to moderator
 GRANT EXECUTE ON AddStudiesOfflineClasses to moderator
 
-
 GRANT EXECUTE ON CalculateAverageGradeForStudent to moderator
 GRANT EXECUTE ON GetClassAttendanceCount to moderator
 GRANT EXECUTE ON DaysRemainingInProgram to moderator
@@ -2413,7 +2347,6 @@ GRANT EXECUTE ON OrdersProgramsAmount to moderator
 GRANT EXECUTE ON AverageMarkOnClass to moderator
 GRANT EXECUTE ON CalculateMinClassParticipantsForStudies to moderator
 
-
 GRANT SELECT ON ScheduleForStudent to moderator
 GRANT SELECT ON LiveOnlineSynchClasses to moderator
 GRANT SELECT ON StudentStudies to moderator
@@ -2422,11 +2355,11 @@ GRANT SELECT ON StudentCourses to moderator
 GRANT SELECT ON AllClassParticipants to moderator
 GRANT SELECT ON AllProgramParticipants to moderator
 ```
+<div style="page-break-after: always;"></div>
 
 ### **Pracownik naukowy (teacher & translator)**
 ```sql
 CREATE ROLE educator
-
 
 GRANT SELECT ON OfflineParticipantsList to educator
 GRANT SELECT ON AttendanceAllClasses to educator
@@ -2437,15 +2370,12 @@ GRANT SELECT ON CoursesSubjectsInfo to educator
 GRANT SELECT ON WebinarsInfo to educator
 GRANT SELECT ON StudentsOuterClasses to educator
 
-
 GRANT EXECUTE ON RedoAttendance to educator
-
 
 GRANT EXECUTE ON CalculateAverageGradeForStudent to educator
 GRANT EXECUTE ON GetClassAttendanceCount to educator
 GRANT EXECUTE ON DaysRemainingInProgram to educator
 GRANT EXECUTE ON AverageMarkOnClass to educator
-
 
 GRANT SELECT ON LiveOnlineSynchClasses to educator
 GRANT SELECT ON AllProgramParticipants to educator
@@ -2463,17 +2393,14 @@ GRANT SELECT ON CoursesSubjectsInfo to student
 GRANT SELECT ON WebinarsInfo to student
 GRANT SELECT ON StudentsPrograms to student
 
-
 GRANT EXECUTE ON AddOrder to student
 GRANT EXECUTE ON RegisterClass to student
 GRANT EXECUTE ON RegisterProgram to student
 GRANT EXECUTE ON AddPayment to student
 
-
 GRANT EXECUTE ON CalculateAverageGradeForStudent to student
 GRANT EXECUTE ON DaysRemainingInProgram to student
 GRANT EXECUTE ON AverageMarkOnClass to student
-
 
 GRANT SELECT ON ScheduleForStudent to student
 GRANT SELECT ON StudentStudies to student
@@ -2484,6 +2411,6 @@ GRANT SELECT ON AllProgramParticipants to student
 ```
 
 
-## 8. **Generator danych**
+## 9. **Generator danych**
 Do napisania generatora danych posłużyliśmy się językiem Python.
 Do komunikacji z bazą danych wykorzystana została biblioteka pyodbc, a do generowania losowych wartości biblioteka Faker.
