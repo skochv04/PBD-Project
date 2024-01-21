@@ -963,7 +963,7 @@ BEGIN
 END
 ```
 
-### **6. Oznaczenie odrobienia nieobecności na zajęciach przez studenta **
+### **6. Oznaczenie odrobienia nieobecności na zajęciach przez studenta**
 ```sql
 	
 create procedure redoAttendance @classID int, @studentID int
@@ -1003,7 +1003,7 @@ end
 
 <div style="page-break-after: always;"></div>
 
-### **8. Dodanie zamówienia**
+### **7. Dodanie zamówienia**
 
 ```sql
 CREATE PROCEDURE AddOrder(
@@ -1029,7 +1029,7 @@ BEGIN
   END CATCH
 END
 ```
-### **9. Dodanie pojedynczych zajęć do zamówienia**
+### **8. Dodanie pojedynczych zajęć do zamówienia**
 ```sql
 
 CREATE PROCEDURE RegisterClass(
@@ -1069,7 +1069,7 @@ END
 
 <div style="page-break-after: always;"></div>
 
-### **10. Dodawanie programu edukacyjnego do zamówienia**
+### **9. Dodawanie programu edukacyjnego do zamówienia**
 ```sql
 
 CREATE PROCEDURE RegisterProgram(
@@ -1106,7 +1106,7 @@ END;
 
 <div style="page-break-after: always;"></div>
 
-### **11. Dodanie nowego pojedynczego niestacjonarnego zajęcia**
+### **10. Dodanie nowego pojedynczego niestacjonarnego zajęcia**
 ```sql
 CREATE PROCEDURE AddOnlineClass
  @Link varchar(255),
@@ -1176,7 +1176,7 @@ END;
 
 ```
 
-### **12. Dodanie nowego pojedynczego stacjonarnego zajęcia**
+### **11. Dodanie nowego pojedynczego stacjonarnego zajęcia**
 ```sql
 
 CREATE PROCEDURE AddOfflineClass
@@ -1256,7 +1256,7 @@ BEGIN
 END;
 ```
 
-### **13. Dodanie nowego webinaru**
+### **12. Dodanie nowego webinaru**
 ```sql
 
 CREATE PROCEDURE AddWebinar
@@ -1321,7 +1321,7 @@ END;
 
 ```
 
-### **14. Dodanie nowego kursu**
+### **13. Dodanie nowego kursu**
 ```sql
 
 CREATE PROCEDURE AddCourse
@@ -1339,44 +1339,42 @@ CREATE PROCEDURE AddCourse
 AS
 BEGIN
   SET NOCOUNT ON;
+  BEGIN TRY
+      DECLARE @NewCourseID int;
+
+      IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @LecturerID)
+      BEGIN
+          THROW 50000, 'LecturerID does not exist in the Teachers table.', 1;
+      END;
 
 
-
-  IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @LecturerID)
-  BEGIN
-      THROW 50000, 'LecturerID does not exist in the Teachers table.', 1;
-  END;
-
-
-  IF @TranslatorID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Translators WHERE TranslatorID = @TranslatorID)
-  BEGIN
-      THROW 50000, 'TranslatorID does not exist in the Translators table.', 1;
-  END;
+      IF @TranslatorID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Translators WHERE TranslatorID = @TranslatorID)
+      BEGIN
+          THROW 50000, 'TranslatorID does not exist in the Translators table.', 1;
+      END;
 
 
-  SELECT @NewCourseID = ISNULL(MAX(CourseID), 0) + 1
-  FROM Courses;
+      INSERT INTO Courses (Place, Advance)
+      VALUES (@Place, @Advance);
 
+      SELECT @NewCourseID = ISNULL(MAX(CourseID), 0)
 
-  INSERT INTO Courses (CourseID, Place, Advance)
-  VALUES (@NewCourseID, @Place, @Advance);
+      INSERT INTO EducationalPrograms (ProgramName, CourseID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
+      VALUES (@ProgramName, @NewCourseID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
 
-
-  SELECT @NewProgramID = ISNULL(MAX(ProgramID), 0) + 1
-  FROM EducationalPrograms;
-
-
-  INSERT INTO EducationalPrograms (ProgramID, ProgramName, CourseID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
-  VALUES (@NewProgramID, @ProgramName, @NewCourseID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
-
-
-
-
-  PRINT 'Course added successfully.';
+      COMMIT TRAN
+      PRINT 'Course added successfully.';
+  END TRY
+  BEGIN CATCH
+      ROLLBACK TRANSACTION
+      DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
+      THROW 52000, @msg, 1;
+  END CATCH
 END;
+
 ```
 
-### **15. Dodanie nowych studiów**
+### **14. Dodanie nowych studiów**
 ```sql
 
 CREATE PROCEDURE AddStudies
@@ -1396,46 +1394,44 @@ CREATE PROCEDURE AddStudies
 AS
 BEGIN
   SET NOCOUNT ON;
+  BEGIN TRY
+      DECLARE @NewStudiesID int;
+
+      IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @LecturerID)
+      BEGIN
+          THROW 50000, 'LecturerID does not exist in the Teachers table.', 1;
+      END;
+
+      IF @TranslatorID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Translators WHERE TranslatorID = @TranslatorID)
+      BEGIN
+          THROW 50000, 'TranslatorID does not exist in the Translators table.', 1;
+      END;
+
+      INSERT INTO Studies (Syllabus, Place, MaxParticipants, EntryFee)
+      VALUES (@Syllabus, @Place, @MaxParticipants, @EntryFee);
+
+      SELECT @NewStudiesID = ISNULL(MAX(StudiesID), 0)
+
+      INSERT INTO EducationalPrograms (ProgramName, StudiesID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
+      VALUES (@ProgramName, @NewStudiesID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
+
+      COMMIT TRAN
+      PRINT 'Studies added successfully.';
 
 
-
-  IF NOT EXISTS (SELECT 1 FROM Teachers WHERE TeacherID = @LecturerID)
-  BEGIN
-      THROW 50000, 'LecturerID does not exist in the Teachers table.', 1;
-  END;
-
-
-  IF @TranslatorID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Translators WHERE TranslatorID = @TranslatorID)
-  BEGIN
-      THROW 50000, 'TranslatorID does not exist in the Translators table.', 1;
-  END;
-
-
-  SELECT @NewStudiesID = ISNULL(MAX(StudiesID), 0) + 1
-  FROM Studies;
-
-
-  INSERT INTO Studies (StudiesID, Syllabus, Place, MaxParticipants, EntryFee)
-  VALUES (@NewStudiesID, @Syllabus, @Place, @MaxParticipants, @EntryFee);
-
-
-  SELECT @NewProgramID = ISNULL(MAX(ProgramID), 0) + 1
-  FROM EducationalPrograms;
-
-
-  INSERT INTO EducationalPrograms (ProgramID, ProgramName, StudiesID, Language, ProgramStart, ProgramEnd, ProgramPrice, LecturerID, TranslatorID)
-  VALUES (@NewProgramID, @ProgramName, @NewStudiesID, @Language, @ProgramStart, @ProgramEnd, @ProgramPrice, @LecturerID, @TranslatorID);
-
-
-
-
-  PRINT 'Studies added successfully.';
+  END TRY
+  BEGIN CATCH
+      ROLLBACK TRANSACTION
+      DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
+      THROW 52000, @msg, 1;
+  END CATCH
 END;
+
 ```
 
 <div style="page-break-after: always;"></div>
 
-### **16. Zmiana szczegółów programu edukacyjnego**
+### **15. Zmiana szczegółów programu edukacyjnego**
 ```sql
 
 CREATE PROCEDURE UpdateEducationalProgram
@@ -1535,7 +1531,7 @@ BEGIN
 END;
 ```
 
-### **17. Dodanie Płatności do złożonego zamówienia**
+### **16. Dodanie Płatności do złożonego zamówienia**
 ```sql
 
 CREATE PROCEDURE AddPayment
@@ -1545,8 +1541,10 @@ CREATE PROCEDURE AddPayment
 AS
 BEGIN
    BEGIN TRY
-       -- Check if the OrderID exists in the Orders table
-       IF EXISTS (SELECT * FROM Orders WHERE OrderID = @OrderID)
+       IF NOT EXISTS (SELECT * FROM Orders WHERE OrderID = @OrderID)
+       BEGIN
+           THROW 51234, N'There is no order with such ID', 1;
+       END
        BEGIN
            DECLARE @price INT;
            IF @PayFull = 1
@@ -1563,10 +1561,6 @@ BEGIN
            INSERT INTO Payments (OrderId, Amount, Date, Status, SystemPaymentID )
            VALUES (@OrderID, @price, GETDATE(), 0, @SystemPaymentID)
        END
-       ELSE
-       BEGIN
-           THROW 51234, N'There is no order with such ID', 1;
-       END
    END TRY
 
 
@@ -1579,31 +1573,7 @@ END;
 
 <div style="page-break-after: always;"></div>
 
-### **18. Wyswietl listę obecności dla wydarzenia**
-```sql
-
-CREATE PROCEDURE GetAttendanceReport
-   @ClassID int
-AS
-BEGIN
-   IF EXISTS ( SELECT * FROM Classes WHERE ClassID = @ClassID)
-   BEGIN
-       SELECT
-           s.FirstName + ' ' + s.LastName AS StudentName,
-           a.Present,
-           a.Redone
-       FROM Attendance a
-       JOIN Students s ON a.ParticipantID = s.StudentID
-       WHERE a.ClassID = @ClassID;
-   END
-   ELSE
-   BEGIN
-       THROW 53523, N'There is no such class', 1;
-   END
-END;
-```
-
-### **19. Dodanie nowych offline zajęć w ramach studiów**
+### **17. Dodanie nowych offline zajęć w ramach studiów**
 ```sql
 
 CREATE PROCEDURE AddStudiesOfflineClasses
@@ -1618,27 +1588,139 @@ CREATE PROCEDURE AddStudiesOfflineClasses
   @ModuleID int,
   @PractiseID int = NULL
 
-
 AS
 BEGIN
   SET NOCOUNT ON;
+  BEGIN TRY
+      DECLARE @StudiesMaxParticipants int;
+      DECLARE @NewClassID int;
 
-  DECLARE @StudiesMaxParticipants int;
+      SELECT @StudiesMaxParticipants = (
+              SELECT MaxParticipants from Studies
+              where StudiesID = @StudiesID)
+      IF (@StudiesMaxParticipants > @MaxParticipants)
+      BEGIN
+          THROW 50000, 'Amount of each ClassesMaxParticipants should be equal or greater than StudiesMaxParticipants.', 1;
+      END;
 
-  SELECT @StudiesMaxParticipants = (
-          SELECT MaxParticipants from Studies
-          where StudiesID = @StudiesID)
-  IF (@StudiesMaxParticipants > @MaxParticipants)
-  BEGIN
-      THROW 50000, 'Amount of each ClassesMaxParticipants should be equal or greater than StudiesMaxParticipants.', 1;
-  END;
+      EXEC AddOfflineClass @RoomNumber, @MaxParticipants, @TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID, @PractiseID, @NewClassID OUTPUT
 
+      COMMIT TRAN
+      PRINT 'StudiesOfflineClasses added successfully.';
 
-  EXEC AddOfflineClass @RoomNumber, @MaxParticipants, @TeacherID, @SubjectID, @StartTime, @EndTime, @ClassPrice, @ModuleID, @PractiseID, @NewClassID OUTPUT
+  END TRY
+  BEGIN CATCH
+      ROLLBACK TRANSACTION
+      DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
+      THROW 52000, @msg, 1;
+  END CATCH
 END;
+```
+### **18. Procedura, pozwalająca na aktualizację oceny studenta z egzaminu z konkretnych studiów. W przypadku oceny, która mieści się w zakresie 50%-100% ustawia się zaliczenie danego programu w RegisteredPrograms za pomocą triggera #2.**
+```sql
+CREATE PROCEDURE SetExamMark(
+   @StudentID int,
+   @StudiesID int,
+   @Mark int)
+   AS
+   BEGIN
+      BEGIN TRY
+          IF NOT @MARK BETWEEN 0 AND 100
+          THROW 52313, N'Mark should be positive value between 0 and 100', 1;
 
+          IF NOT EXISTS (SELECT 1 FROM Students WHERE StudentID = @StudentID)
+          THROW 52313, N'StudentID does not exist in the Students table.', 1;
+
+          IF NOT EXISTS (SELECT 1 FROM Studies WHERE StudiesID = @StudiesID)
+          THROW 52313, N'StudiesID does not exist in the Studies table.', 1;
+
+          IF NOT EXISTS (select ss.RegisteredProgramID
+              from StudentStudies(@StudentID) as ss
+               where ss.StudiesID = @StudiesID)
+          THROW 52313, N'Student is not registered for this studies.', 1;
+
+          IF EXISTS (select 1 FROM Exams where StudentID = @StudentID and StudiesID = @StudiesID)
+          BEGIN
+              UPDATE EXAMS
+              SET Mark = @Mark
+              WHERE StudentID = @StudentID and StudiesID = @StudiesID
+              PRINT 'Exam updated successfully.';
+          END
+
+          ELSE
+          BEGIN
+              INSERT INTO Exams (StudiesID, StudentID, Mark) VALUES (@StudiesID, @StudentID, @Mark)
+              PRINT 'Exam added successfully.';
+          END
+      END TRY
+
+      BEGIN CATCH
+           DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
+           THROW 52000, @msg, 1;
+      END CATCH
+   END
 ```
 
+### **19. "Jawna" zmiana statusu dostępu do programu edukacyjnego, którą jawnie ustawiać może wyłącznie dyrektor szkoły.**
+```sql
+CREATE PROCEDURE SetProgramAccess(
+ @RegisteredProgramID int,
+ @Status int)
+AS
+BEGIN
+  SET NOCOUNT ON;
+  BEGIN TRY
+
+      IF NOT EXISTS (SELECT 1 FROM RegisteredPrograms WHERE RegisteredProgramID = @RegisteredProgramID)
+      BEGIN
+        THROW 50000, 'RegisteredProgramID does not exist in the Students table.', 1;
+      END;
+
+      IF @Status != 0 AND @Status != 1
+      BEGIN;
+          throw 52000, N'Status should be equal to "1" to confirm access or "0" to cancel access', 1
+      END
+
+      BEGIN
+          UPDATE RegisteredPrograms SET Access = @Status WHERE RegisteredProgramID = @RegisteredProgramID
+      END
+
+  END TRY
+  BEGIN CATCH
+    DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
+    THROW 52000, @msg, 1;
+  END CATCH
+END
+```
+
+### **20. "Jawna" zmiana statusu dostępu do pojedynczych zajęć, którą jawnie ustawiać może wyłącznie dyrektor szkoły.**
+```sql
+CREATE PROCEDURE SetClassAccess(
+ @RegisteredClassID int,
+ @Status int)
+AS
+BEGIN
+  SET NOCOUNT ON;
+  BEGIN TRY
+      IF NOT EXISTS (SELECT 1 FROM RegisteredClasses WHERE RegisteredClassID = @RegisteredClassID)
+      BEGIN
+        THROW 50000, 'RegisteredClassID does not exist in the RegisteredClasses table.', 1;
+      END;
+
+      IF @Status != 0 AND @Status != 1
+      BEGIN;
+          throw 52000, N'Status should be equal to "1" to confirm access or "0" to cancel access', 1
+      END
+      BEGIN
+          UPDATE RegisteredClasses SET Access = @Status WHERE RegisteredClassID = @RegisteredClassID
+      END
+  END TRY
+  BEGIN CATCH
+    DECLARE @msg NVARCHAR(2048) = N'ERROR: ' + ERROR_MESSAGE();
+    THROW 52000, @msg, 1;
+  END CATCH
+END
+```
 ## 4. **Funkcje**
 
 ### **1.Obliczanie średniej ocen dla studenta**
