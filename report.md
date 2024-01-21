@@ -1723,25 +1723,24 @@ END
 ```
 ## 4. **Funkcje**
 
-### **1.Obliczanie średniej ocen dla studenta**
+### **1. Obliczanie średniej ocen dla studenta**
 ```sql
 
 CREATE FUNCTION CalculateAverageGradeForStudent
 (
-   @StudentID int
+  @StudentID int,
+  @StudiesID int
 )
 RETURNS DECIMAL(5, 2)
 AS
 BEGIN
-   DECLARE @AverageGrade DECIMAL(5, 2);
+  DECLARE @AverageGrade DECIMAL(5, 2);
 
-
-   SELECT @AverageGrade = AVG(Mark)
-   FROM Exams
-   WHERE StudentID = @StudentID;
-
-
-   RETURN ISNULL(@AverageGrade, 0); -- Jeśli nie ma ocen, zwraca 0
+  SELECT @AverageGrade = AVG(Mark)
+  FROM Exams
+  WHERE StudentID = @StudentID and StudiesID = @StudiesID;
+  
+  RETURN ISNULL(@AverageGrade, 0); -- Jeśli nie ma ocen, zwraca 0
 END;
 ```
 
@@ -1783,16 +1782,13 @@ AS
 BEGIN
    DECLARE @DaysRemaining INT;
 
-
    SELECT @DaysRemaining = DATEDIFF(DAY, GETDATE(), ProgramEnd)
    FROM EducationalPrograms
    WHERE ProgramID = @ProgramID;
 
-
    -- Jeżeli program już się zakończył, zwróć 0
    IF @DaysRemaining < 0
        SET @DaysRemaining = 0;
-
 
    RETURN @DaysRemaining;
 END;
@@ -1800,7 +1796,7 @@ END;
 
 
 
-### *4.Obliczanie sumy pełnym kwot za wszystkie programy na danym zamówieniu*
+### **4. Obliczanie sumy pełnych kwot za wszystkie programy na danym zamówieniu**
 
 ```sql
 CREATE FUNCTION CalculateFullPriceForOrder
@@ -1826,7 +1822,7 @@ BEGIN
 END;
 ```
 
-### *5.Obliczanie sum cen wpisowych na programy na danym zamówieniu*
+### **5. Obliczanie sum cen wpisowych na programy na danym zamówieniu**
 
 ```sql
 CREATE FUNCTION CalculateEntryPriceForOrder
@@ -1855,32 +1851,160 @@ BEGIN
 END;
 ```
 
-### **6.Obliczanie łącznej kwoty wydanej przez danego studenta na Programy edukacyjne**
+### **6. Obliczanie łącznej kwoty wydanej przez danego studenta na Programy edukacyjne za konkretny okres czasowy**
 ```sql
 
 CREATE FUNCTION CalculateTotalPaymentsForStudent
 (
-   @StudentID int,
-   @StartDate datetime,
-   @EndDate datetime
+  @StudentID int,
+  @startDate date,
+  @endDate date
 )
 RETURNS MONEY
 AS
 BEGIN
-   DECLARE @TotalPayments MONEY;
+  DECLARE @TotalPayments MONEY;
+
+  SELECT @TotalPayments = SUM(Amount)
+  FROM Payments
+  WHERE OrderID IN (SELECT OrderID FROM Orders WHERE StudentID = @StudentID) AND status = 1 AND date between @startDate and @endDate;
+  
+  RETURN ISNULL(@TotalPayments, 0);
+END;
 
 
-   SELECT @TotalPayments = SUM(P.Amount)
-   FROM Payments P
-   WHERE P.OrderID IN (SELECT OrderID FROM Orders WHERE StudentID = @StudentID)
-   AND P.Date >= @StartDate 
-   AND P.Date <= @EndDate
-   AND status = 1;
+```
 
+### **7. Wyświetlanie harmonogramu zajęć na konkretny dzień dla konkretnego studenta**
+```sql
+CREATE FUNCTION ScheduleForStudent(@StudentID int, @day DATE)
+   RETURNS TABLE
+       AS
+       RETURN
+       SELECT Student, ModuleName, SubjectName, Teacher, StartTime, EndTime, RoomNumber
+       FROM OfflineParticipantsList as ofp
+       WHERE @StudentID = ofp.StudentID and @day = cast(StartTime as date)
+```
 
-   RETURN ISNULL(@TotalPayments, 0);
-END
+### **8. Obliczenie ilości zamówionych przez studentów programów w danym roku**
+```sql
+CREATE FUNCTION OrdersProgramsAmount(@year int)
+   RETURNS INT
+   AS
+   BEGIN
+       DECLARE @Amount INT;
+       SET @Amount = (
+       select count(*) from orders
+       inner join RegisteredPrograms as rp
+           on orders.OrderID = rp.OrderID
+           where year(cast (OrderDate as DATE))  = @year)
+       RETURN @Amount
+   END
+```
 
+### **9. Wyświetlenie trwających w tej chwili synchronicznych zajęć niestacjonarnych**
+```sql
+CREATE FUNCTION LiveOnlineSynchClasses()
+   RETURNS TABLE
+       AS
+       RETURN
+       SELECT c.StartTime, c.EndTime, oc.Link from OnlineClasses as oc
+           INNER JOIN Classes as c on oc.ClassID = c.ClassID
+           WHERE oc.Synch = 'true' AND GETDATE() between c.StartTime AND c.EndTime
+```
+
+### **10. Obliczenie średniej oceny na pojedynczych zajęciach (tylko w przypadku, gdy ocenę wystawiono każdemu uczestnikowi zajęć)**
+```sql
+CREATE FUNCTION AverageMarkOnClass(@ClassID int)
+   RETURNS INT
+   BEGIN
+       DECLARE @Average int
+       IF NOT EXISTS (SELECT MARK FROM Attendance WHERE MARK is null and @ClassID = Attendance.ClassID)
+           SET @Average = (select AVG(MARK) from Attendance where @ClassID = Attendance.ClassID)
+       ELSE set @Average = null
+       RETURN @Average
+   END
+
+```
+
+### **11. Wyświetlenie listy studiów, na które jest zapisany dany student. Funkcja wykorzystywana jest w procedurze #20 oraz triggerze #2.**
+```sql
+CREATE FUNCTION StudentStudies(@StudentID int)
+   RETURNS TABLE
+       AS
+       RETURN
+       select StudentID, Student, RegisteredProgramID, StudiesID, sp.ProgramName, sp.ProgramStart, sp.ProgramEnd, sp.Passed
+       from StudentsPrograms as sp
+           inner join EducationalPrograms as ep
+               on ep.ProgramID = sp.ProgramID
+       where @StudentID = sp.StudentID and StudiesID is not null
+```
+
+### **12. Funkcja sprawdzająca minimalnie możliwej liczby uczęstników zajęć w ramach modułu studiów (jeśli danę zajęcia są dodawane do studiów)**
+```sql
+CREATE FUNCTION CalculateMinClassParticipantsForStudies(@ModuleID int)
+RETURNS INT
+AS
+BEGIN
+  DECLARE @MinParticipants INT;
+  SET @MinParticipants = COALESCE((select s.MaxParticipants
+   from Modules as m
+       inner join EducationalPrograms as ep
+           on m.ProgramID = ep.ProgramID
+       inner join Studies as s
+           on ep.StudiesID = s.StudiesID
+       where ModuleID = @ModuleID), 0)
+  RETURN @MinParticipants;
+END;
+```
+
+### **13. Wyświetlenie listy osób zapisanych na dane offline-wydarzenie w ramach studiów**
+```sql
+CREATE FUNCTION AllClassParticipants(@ClassID int)
+   RETURNS TABLE
+       AS
+       RETURN
+       select distinct StudentID, Student, StudiesID
+       from StudentsPrograms as sp
+           inner join EducationalPrograms as ep
+               on ep.ProgramID = sp.ProgramID
+           inner join Modules as m
+               on ep.ProgramID = m.ProgramID
+           inner join Classes as c
+               on m.ModuleID = c.ModuleID
+           inner join OfflineClasses as ofl
+               on c.ClassID = ofl.ClassID and c.ClassID = @ClassID
+       where StudiesID is not null
+       UNION
+       select distinct s.StudentID, s.FirstName + ' ' + s.LastName as Student, ed.StudiesID
+       from Students as s
+           inner join Orders as o
+               on s.StudentID = o.StudentID
+           inner join RegisteredClasses as rc
+               on o.OrderID = rc.OrderID
+           inner join Classes as c
+               on rc.ClassID = c.ClassID
+           inner join OfflineClasses as ofl
+               on c.ClassID = ofl.ClassID
+           inner join Modules as m
+               on c.ModuleID = m.ModuleID
+           inner join EducationalPrograms as ed
+               on m.ProgramID = ed.ProgramID
+          where ed.StudiesID is not null and c.ClassID = @ClassID
+
+```
+
+### **14. Wyświetlenie listy osób zapisanych na dany program**
+```sql
+CREATE FUNCTION AllProgramParticipants(@ProgramID int)
+   RETURNS TABLE
+       AS
+       RETURN
+       select distinct StudentID, Student
+       from StudentsPrograms as sp
+           inner join EducationalPrograms as ep
+               on ep.ProgramID = sp.ProgramID
+       where ep.ProgramID = @ProgramID
 ```
 
 ## 5. **Triggery**
