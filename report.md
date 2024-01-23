@@ -1558,6 +1558,7 @@ AS
 BEGIN
    SET NOCOUNT ON;
    BEGIN TRY
+       BEGIN TRAN
        DECLARE @StudiesMaxParticipants int;
        DECLARE @NewClassID int;
        DECLARE @StudiesProgramStart date;
