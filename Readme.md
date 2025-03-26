@@ -13,29 +13,29 @@ Repozytorium służy jako dokumentacja dla projektu zrealizowanego w ramch przed
 
 ## Pliki Projektu
 
-+ [functionality.md](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/functionality.md) - 
++ [`functionality.md`](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/functionality.md) - 
 Główne funkcjonalności i specyfikacja działanie systemu, funkcjonalności użytkowników systemu.
 
-+ [functions.md](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/functions.md) -
++ [`functions.md`](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/functions.md) -
 Funkcje bazy danych.
 
-+ [procedures.md](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/procedures.md) - 
++ [`procedures.md`](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/procedures.md) - 
 Procedury bazy danych.
 
-+ [report.md](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/report.md) -
++ [`report.md`](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/report.md) -
 Całościowe sprawozdanie z realizacji projektu - plik Markdown.
 
-+ [report.pdf](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/report.pdf) -
++ [`report.pdf`](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/report.pdf) -
 Całościowe sprawozdanie z realizacji projektu - plik pdf.
 
-+ [requirements.pdf](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/requirements.pdf) -
++ [`requirements.pdf`](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/requirements.pdf) -
 Opis polecenia, którego rozwiązaniem jest baza danych wraz ze sprawozdaniem [report.pdf](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/report.pdf).
 
-+ [schemat.pdf](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/schemat.pdf) -
++ [`schemat.pdf`](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/schemat.pdf) -
 Schemat zaprojektowanej bazy danych, taki jak widoczny powyżej, w formie pliku pdf.
 
-+ [tables.md](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/tables.md) -
++ [`tables.md`](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/tables.md) -
 Tabele bazy danych.
 
-+ [views.md](views.md) -
++ [`views.md`](views.md) -
 Widoki bazy danych.
