@@ -22,7 +22,7 @@ Funkcje bazy danych.
 + [procedures.md](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/procedures.md) - 
 Procedury bazy danych.
 
-+ [report.md](rhttps://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/report.md) -
++ [report.md](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/report.md) -
 Całościowe sprawozdanie z realizacji projektu - plik Markdown.
 
 + [report.pdf](https://github.com/OlGierd03/Learning-Platform-Database-System/blob/main/report.pdf) -
@@ -38,4 +38,4 @@ Schemat zaprojektowanej bazy danych, taki jak widoczny powyżej, w formie pliku 
 Tabele bazy danych.
 
 + [views.md](views.md) -
-Widoki bazyd danyhc.
+Widoki bazy danych.
