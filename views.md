@@ -60,11 +60,7 @@ GROUP BY O.StudentID
 
 ```
 
-### **3. Ogólny raport dotyczący liczby zapisanych osób na przyszłe wydarzenia (z informacją, czy wydarzenie jest stacjonarnie, czy zdalnie).**
-```sql
-```
-
-### **4. Ogólny raport dotyczący frekwencji na zakończonych już wydarzeniach..**
+### **3. Ogólny raport dotyczący frekwencji na zakończonych już wydarzeniach..**
 ```sql
 
 -- a) Lista osób
@@ -87,11 +83,8 @@ select a.ClassID, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime, count(s.Stud
     where c.EndTime < getdate()
 group by a.ClassID, c.TeacherID, c.SubjectID, c.StartTime, c.EndTime
 ```
-### **5. Lista obecności dla każdego szkolenia z datą, imieniem, nazwiskiem i informacją czy uczestnik był obecny, czy nie.**
-```sql
-```
 
-### **6. Raport bilokacji: lista osób, które są zapisane na co najmniej dwa przyszłe szkolenia, które ze sobą kolidują czasowo.**
+### **4. Raport bilokacji: lista osób, które są zapisane na co najmniej dwa przyszłe szkolenia, które ze sobą kolidują czasowo.**
 ```sql
 select * from (select s.StudentID, s.FirstName + ' ' + s.LastName as Student, count(a.ClassID) as Bilocations
 from Students as s
