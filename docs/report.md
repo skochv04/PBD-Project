@@ -11,12 +11,12 @@ A database model for a hybrid learning platform, developed during the Database S
 
 ### **Users**
 
-Unregistered client:
+**Unregistered client:**
 
 - Viewing available services
 - Creating an individual or business account
 
-Student (client with an account):
+**Student (client with an account):**
 
 - Viewing available services
 - Ability to enroll in free or paid educational programs and classes in selected studies by making a payment
@@ -24,7 +24,7 @@ Student (client with an account):
 - Access to learning materials in courses and studies
 - Viewing the schedule of classes the student is enrolled in
 
-Educator (teacher/translator):
+**Educator (teacher/translator):**
 
 - Viewing all educational programs they lead, along with their details
 - Access to learning materials for educational programs and the ability to edit them
@@ -32,7 +32,7 @@ Educator (teacher/translator):
 - Ability to assign grades for classes and exams for students in the study program (teacher only)
 - Ability to approve make-up classes for student absences
 
-System Administrator:
+**System Administrator:**
 
 - Managing the class schedule for educational programs
 - Updating available services
@@ -41,7 +41,7 @@ System Administrator:
 - Ability to modify student data
 - Editing the employee list
 
-School Director:
+**School Director:**
 
 - Has the privileges of a system administrator
 - Changing user access to educational programs
@@ -81,7 +81,7 @@ School Director:
 <div style="page-break-after: always;"></div>
 
 ## **2. Database Schema**
-![dbschema](img/database-schema.png)
+![dbschema](../img/database-schema.png)
 
 The services offered by the company (various courses and trainings) are connected by **EducationalPrograms**. Each record represents either a study program (**Studies**), a course (**Courses**), or a webinar (**Webinars**). A list of all classes (sessions) is stored in the **Classes** table. These sessions can be in-person (**OfflineClasses**) or online (**OnlineClasses**).
 

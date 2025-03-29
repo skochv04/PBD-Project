@@ -1,5 +1,5 @@
 # Database Schema and Tables
-![dbschema](img/database-schema.png)
+![dbschema](../img/database-schema.png)
 
 ## Description
 The services offered by the company (various courses and trainings) are connected by **EducationalPrograms**. Each record represents either a study program (**Studies**), a course (**Courses**), or a webinar (**Webinars**). A list of all classes (sessions) is stored in the **Classes** table. These sessions can be in-person (**OfflineClasses**) or online (**OnlineClasses**).
