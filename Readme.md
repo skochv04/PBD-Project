@@ -27,4 +27,4 @@ For a detailed explanation of the requirements, database schema, functionality, 
 📄 [Indexes](docs/indexes.md)  
 📄 [Roles](docs/roles.md)  
 📄 [Data generator](docs/data-generator.md)  
-📄 [Project Report](docs/report.md) – contains a summary of all the above documentation.
+📄 [Project Report](docs/report.md) – contains a summary of all the above documentation
