@@ -1,45 +1,41 @@
+# Database Schema and Tables
+![dbschema](img/database-schema.png)
 
-## **Tabele**
+## Description
+The services offered by the company (various courses and trainings) are connected by **EducationalPrograms**. Each record represents either a study program (**Studies**), a course (**Courses**), or a webinar (**Webinars**). A list of all classes (sessions) is stored in the **Classes** table. These sessions can be in-person (**OfflineClasses**) or online (**OnlineClasses**).
 
-Oferowane przez firmę usługi (różnego rodzaju kursy i szkolenia) łączy EducationalPrograms. Każdy rekord przedstawia albo studia (Studies), albo kurs (Courses) albo webinar (Webinars). Spis wszystkich poszczególnych zajęć (spotkań) znajduje się w tabeli Classes. Spotkania mogą być stacjonarne (OfflineClasses) lub niestacjonarne (OnlineClasses).
-Kursy (Courses) składają się z modułów (Modules). Pojedyncze zajęcia tych modułów mogą być prowadzone stacjonarnie lub niestacjonarnie.
-Studia podobnie do kursów składają się z modułów (Modules), oraz posiadają praktyki (Practises).
+**Courses** consist of **Modules**. Classes of these modules can be conducted in-person or online.
 
+Similar to courses, study programs consist of **Modules** and also include **Practises**.
 
-Studenci mogą składać zamówienia (Orders) i przeglądać listę programów (RegisteredPrograms) oraz pojedynczych spotkań (RegisteredClasses), na które są zapisane.
+Students can make **Orders** and view the list of programs (**RegisteredPrograms**) and classes (**RegisteredClasses**) they are enrolled in.
 
-### **Translators**
+## Tabels
 ```sql
 -- Table:  Translators
 CREATE TABLE  Translators (
-   TranslatorID int  NOT NULL,
+   TranslatorID int AUTO_INCREMENT NOT NULL,
    FirstName varchar(20)  NOT NULL,
    LastName varchar(20)  NOT NULL,
    CountryID int  NOT NULL,
    CONSTRAINT Translator_pk PRIMARY KEY  (TranslatorID)
 );
-```
 
-### **Attendance**
-```sql
 -- Table: Attendance
-—- Zawiera informacje dotyczące obecności konkretnych studentów z tabeli Students na zajęciach z tabeli Classes
+-- Contains information regarding the attendance of specific students from the Students table in the classes from the Classes table
 CREATE TABLE Attendance (
-   AttendanceID int  NOT NULL,
+   AttendanceID int AUTO_INCREMENT NOT NULL,
    ClassID int  NOT NULL,
    Present bit  NOT NULL DEFAULT 0,
    ParticipantID int  NOT NULL,
    Redone bit  NOT NULL DEFAULT 0,
    CONSTRAINT Attendance_pk PRIMARY KEY  (AttendanceID)
 );
-```
 
-### **Classes**
-```sql
 -- Table: Classes
-— Pojedyncze spotkanie w ramach programu edukacyjnego (albo konkretnego modułu w przypadku kursów lub studiów), może być w formacie online lub offline
+-- A single session within an educational program (or a specific module in the case of courses or study programs) can be either online or offline
 CREATE TABLE Classes (
-   ClassID int  NOT NULL,
+   ClassID int AUTO_INCREMENT NOT NULL,
    TeacherID int  NOT NULL,
    SubjectID int  NOT NULL,
    StartTime datetime  NOT NULL,
@@ -51,36 +47,19 @@ CREATE TABLE Classes (
    CHECK (ClassPrice >= 0),
    CONSTRAINT Classes_pk PRIMARY KEY  (ClassID)
 );
-```
 
-### **Countries**
-```sql
+
 -- Table: Countries
 CREATE TABLE Countries (
-   CountryID int  NOT NULL,
+   CountryID int AUTO_INCREMENT NOT NULL,
    CountryName int  NOT NULL UNIQUE,
    CONSTRAINT Countries_pk PRIMARY KEY  (CountryID)
 );
-```
 
-### **Courses**
-```sql
--- Table: Courses
-CREATE TABLE Courses (
-   CourseID int  NOT NULL,
-   Place varchar(40)  NOT NULL,
-   Advance money  NOT NULL,
-   CHECK (Advance >= 0),
-   CONSTRAINT Courses_pk PRIMARY KEY  (CourseID)
-);
-```
-
-### **EducationalPrograms**
-```sql
 -- Table: EducationalPrograms
-—- Zawiera szczegóły konkretnego programu edukacyjnego, którym mogą być studia z tabeli Studies, kursy z tabeli Courses lub Webinary z tabeli Webinars, w każdym rekorcie tylko jedna z trzech wartości: StudiesID, WebinarID, CourseID nie jest NULL-em.
+-- Contains details of a specific educational program, which can be a study program from the Studies table, a course from the Courses table, or a webinar from the Webinars table. In each record, only one of the three values: StudiesID, WebinarID, or CourseID is not NULL
 CREATE TABLE EducationalPrograms (
-   ProgramID int  NOT NULL,
+   ProgramID int AUTO_INCREMENT NOT NULL,
    ProgramName varchar(100)  NOT NULL UNIQUE,
    StudiesID int  NULL,
    WebinarID int  NULL,
@@ -95,83 +74,87 @@ CREATE TABLE EducationalPrograms (
    CHECK (ProgramPrice >= 0),
    CONSTRAINT EducationalPrograms_pk PRIMARY KEY  (ProgramID)
 );
-```
 
-### **Exams**
+```
+<div style="page-break-after: always;"></div>
+
 ```sql
+-- Table: Courses
+CREATE TABLE Courses (
+   CourseID int AUTO_INCREMENT NOT NULL,
+   Place varchar(40)  NOT NULL,
+   Advance money  NOT NULL,
+   CHECK (Advance >= 0),
+   CONSTRAINT Courses_pk PRIMARY KEY  (CourseID)
+);
+
 -- Table: Exams
-—- Zawiera wyniki z egzaminów dla studentów (Tabela Students) zapisanych na studia(Tabela Studies)
+-- Contains exam results for students (from the Students table) enrolled in study programs (from the Studies table)
 CREATE TABLE Exams (
-   ExamID int  NOT NULL,
+   ExamID int AUTO_INCREMENT NOT NULL,
    StudiesID int  NOT NULL,
    StudentID int  NOT NULL,
    Mark int  NOT NULL DEFAULT 0,
    CHECK(Mark >= 0 AND Mark <= 100),
    CONSTRAINT Exams_pk PRIMARY KEY  (ExamID)
 );
-```
 
-### **Modules**
-```sql
 -- Table: Modules
-—- Zbiór zajęć na określony temat, nie tożsamy z pojęciem przedmiotu (jeden moduł może zawierać zajęcia z różnych przedmiotów). Pozwalają na łączenie zajęć różnej formy kształcenia (stacjonarne, online asynchroniczne, online synchroniczne, hybrydowe).
-—- Dla przykładu:
-—- Moduł “Programowanie w matematyce” mógłby obejmować szereg zajęć z przedmiotów matematycznych, na których problemy rozwiązywane są przy pomocy pisanego kodu
+-- A set of classes on a specific topic, not identical to the concept of a subject (one module can include classes from different subjects). It allows for the combination of classes with different forms of education (in-person, asynchronous online, synchronous online, hybrid).
+-- For example:
+-- The module "Programming in Mathematics" could include a series of classes from mathematical subjects, where problems are solved using written code
 CREATE TABLE Modules (
-   ModuleID int  NOT NULL,
+   ModuleID int AUTO_INCREMENT NOT NULL,
    ProgramID int  NOT NULL,
    ModuleName varchar(40)  NOT NULL,
    ModuleDescription varchar(100)  NOT NULL,
    CONSTRAINT Modules_pk PRIMARY KEY  (ModuleID)
 );
-```
 
-### **OfflineClasses**
-```sql
+
 -- Table: OfflineClasses
-—- Podzbiór Classes: pojedyncze zajęcia, prowadzone w trybie offline (stacjonarnie), zawsze są podporządkowane jednemu modułu zajęć.
+-- A subset of Classes: classes conducted in offline (in-person) mode are always associated with a specific module
 CREATE TABLE OfflineClasses (
-   OfflineClassID int  NOT NULL,
+   OfflineClassID int AUTO_INCREMENT NOT NULL,
    ClassID int  NOT NULL,
    RoomNumber int  NOT NULL,
-   MinParticipants int  NOT NULL DEFAULT 0,
+   MaxParticipants int  NOT NULL DEFAULT 0,
    Mark int  NULL,
    CHECK(Mark >= 0 AND Mark <= 100),
    CONSTRAINT OfflineClasses_pk PRIMARY KEY  (OfflineClassID)
 );
-```
 
-### **OnlineClasses**
-```sql
+
 -- Table: OnlineClasses
-—- Podzbiór Classes: pojedyncze zajęcia, prowadzone w trybie online. Obejmują synchroniczne i asynchroniczne moduły.
+-- A subset of Classes: classes conducted online. These include synchronous and asynchronous modules
 CREATE TABLE OnlineClasses (
-   OnlineClassID int  NOT NULL,
+   OnlineClassID int AUTO_INCREMENT NOT NULL,
    ClassID int  NOT NULL,
    Link varchar(255)  NOT NULL,
    Synch bit  NOT NULL DEFAULT 0,
    CONSTRAINT OnlineClasses_pk PRIMARY KEY  (OnlineClassID)
 );
+
 ```
 
-### **Orders**
+<div style="page-break-after: always;"></div>
+
 ```sql
 -- Table: Orders
-—- Lista zamówień przez Studentów. Informacja o zakupionych programach oraz pojedynczych spotkaniach znajduje się w tabelach RegisteredPrograms i RegisteredClasses odpowiednio.
+-- A list of orders placed by students. Information about purchased programs and individual classes is stored in the RegisteredPrograms and RegisteredClasses tables, respectively
 CREATE TABLE Orders (
-   OrderID int  NOT NULL,
+   OrderID int AUTO_INCREMENT NOT NULL,
    StudentID int  NOT NULL,
    OrderDate datetime  NOT NULL DEFAULT GETDATE(),
+   OrderStatus varchar(40) NOT NULL DEFAULT 'NOT PAID',
+   CHECK(OrderStatus IN ('NOT PAID', 'ENTRY PAID', 'FULL PAID'))
    CONSTRAINT Orders_pk PRIMARY KEY  (OrderID)
 );
-```
 
-### **Payments**
-```sql
 -- Table: Payments
-—- Spis płatność dokonanych w celu częściowego lub całkowitego opłacenia zamówienia z tabeli Orders. Kolumna Status informuje czy płatność została zakończona sukcesem, natomiast kolumna SystemPaymentID zawiera link do zewnętrznego systemu płatności.
+-- A list of payments made to partially or fully pay for an order from the Orders table. The Status column indicates whether the payment was successfully completed, while the SystemPaymentID column contains a link to the external payment system
 CREATE TABLE Payments (
-   PaymentID int  NOT NULL,
+   PaymentID int AUTO_INCREMENT NOT NULL,
    OrderID int  NOT NULL,
    Amount money  NOT NULL,
    Date date  NOT NULL DEFAULT GETDATE(),
@@ -179,120 +162,98 @@ CREATE TABLE Payments (
    CHECK (Amount >= 0),
    CONSTRAINT Payments_pk PRIMARY KEY  (PaymentID)
 );
-```
 
-### **Practises**
-```sql
 -- Table: Practises
-—- Każde studia mogą zawierać wiele praktyk, tabela przetrzymuje opis i identyfikator danych praktyk. W Tabeli Classes znajduje się pole PracticeID, które nie jest NULL-em w przypadku gdy dane zajęcia realizują dane praktyki.
+-- Each study program may include multiple practical classes. The table stores the description and identifier of each practical classes. In the Classes table, there is a field PracticeID, which is not NULL when the specific classes are part of a given practical classes.
 CREATE TABLE Practises (
-   PractiseID int  NOT NULL,
+   PractiseID int AUTO_INCREMENT NOT NULL,
    StudiesID int  NOT NULL,
    PracticeName varchar(40)  NOT NULL,
    PracticeDescription varchar(255)  NOT NULL,
    CONSTRAINT Practices_pk PRIMARY KEY  (PractiseID)
 );
-```
 
-### **RegisteredClasses**
-```sql
 -- Table: RegisteredClasses
-—- Lista zakupionych przez studentów pojedynczych classes (zjazdów w ramach studiów) z numerami zamówienia
+-- A list of individual classes (sessions within study programs) purchased by students, along with their order numbers
 CREATE TABLE RegisteredClasses (
-   RegisteredClassID int  NOT NULL,
+   RegisteredClassID int AUTO_INCREMENT NOT NULL,
    OrderID int  NOT NULL,
    ClassID int  NOT NULL,
+   Access bit NOT NULL DEFAULT 0,
    CONSTRAINT RegisteredClasses_pk PRIMARY KEY  (RegisteredClassID)
 );
-```
 
-### **RegisteredPrograms**
-```sql
 -- Table: RegisteredPrograms
-—- Lista zakupionych przez studentów EducationalProgramów z numerami zamówienia
+-- A list of EducationalPrograms purchased by students, along with their order numbers
 CREATE TABLE RegisteredPrograms (
-   RegisteredProgramID int  NOT NULL,
+   RegisteredProgramID int AUTO_INCREMENT NOT NULL,
    OrderID int  NOT NULL,
    ProgramID int  NOT NULL,
    Passed bit  NOT NULL DEFAULT 0,
-   CertificateLink varchar(255)  NOT NULL,
+   CertificateLink varchar(255),
+   Access bit NOT NULL DEFAULT 0,
    CONSTRAINT RegisteredPrograms_pk PRIMARY KEY  (RegisteredProgramID)
 );
-```
 
-### **Students**
-```sql
--- Table: Students
-CREATE TABLE Students (
-   StudentID int  NOT NULL,
-   FirstName varchar(20)  NOT NULL,
-   LastName varchar(20)  NOT NULL,
-   CountryID int  NOT NULL,
-   Email varchar(40)  NOT NULL UNIQUE,
-   CONSTRAINT Students_pk PRIMARY KEY  (StudentID)
-);
-```
-
-### **Studies**
-```sql
--- Table: Studies
-CREATE TABLE Studies (
-   StudiesID int  NOT NULL,
-   Syllabus varchar(255)  NOT NULL,
-   Place varchar(100)  NOT NULL,
-   MinParticipants int  NOT NULL,
-   EntryFee money  NOT NULL
-   CHECK (EntryFee >= 0),
-   CONSTRAINT Studies_pk PRIMARY KEY  (StudiesID)
-);
-```
-
-### **SubjectCategories**
-```sql
 -- Table: SubjectCategories
-—- Zawiera kategorie różnych prowadzonych przedmiotów z tabeli Subjects
-—- np. Matematyka(SubjectCategories) jest kategorią przedmiotu algebra(Subjects)
+-- Contains categories of various subjects conducted, as stored in the Subjects table. For example, Mathematics (SubjectCategories) is a category of the subject Algebra (Subjects)
 CREATE TABLE SubjectCategories (
-   CategoryID int  NOT NULL,
+   CategoryID int AUTO_INCREMENT NOT NULL,
    CategoryName varchar(40)  NOT NULL UNIQUE,
    Description varchar(255)  NOT NULL,
    CONSTRAINT SubjectCategories_pk PRIMARY KEY  (CategoryID)
 );
 ```
 
-### **Subjects**
+<div style="page-break-after: always;"></div>
+
 ```sql
+-- Table: Studies
+CREATE TABLE Studies (
+   StudiesID int AUTO_INCREMENT NOT NULL,
+   Syllabus varchar(255)  NOT NULL,
+   Place varchar(100)  NOT NULL,
+   MaxParticipants int  NOT NULL,
+   EntryFee money  NOT NULL
+   CHECK (EntryFee >= 0),
+   CONSTRAINT Studies_pk PRIMARY KEY  (StudiesID)
+);
+
+-- Table: Students
+CREATE TABLE Students (
+   StudentID int AUTO_INCREMENT NOT NULL,
+   FirstName varchar(20)  NOT NULL,
+   LastName varchar(20)  NOT NULL,
+   CountryID int  NOT NULL,
+   Email varchar(40)  NOT NULL UNIQUE,
+   CONSTRAINT Students_pk PRIMARY KEY  (StudentID)
+);
+
+-- Table: Subjects
 CREATE TABLE Subjects (
-   SubjectID int  NOT NULL,
+   SubjectID int AUTO_INCREMENT NOT NULL,
    CategoryID int  NOT NULL,
    Description varchar(255)  NOT NULL,
    SubjectName varchar(40)  NOT NULL UNIQUE,
    CONSTRAINT Subjects_pk PRIMARY KEY  (SubjectID)
 );
-```
 
-### **Teachers**
-```sql
+-- Table: Teachers
 CREATE TABLE Teachers (
-   TeacherID int  NOT NULL,
+   TeacherID int AUTO_INCREMENT NOT NULL,
    FirstName varchar(15)  NOT NULL,
    LastName varchar(15)  NOT NULL,
    CountryID int  NOT NULL,
    CONSTRAINT Teachers_pk PRIMARY KEY  (TeacherID)
 );
-```
 
-### **Webinars**
-```sql
+-- Table: Webinars
 CREATE TABLE Webinars (
-   WebinarID int  NOT NULL,
+   WebinarID int AUTO_INCREMENT NOT NULL,
    ClassID int  NOT NULL,
    CONSTRAINT Webinars_pk PRIMARY KEY  (WebinarID)
 );
-```
 
-### **Foreign keys**
-```sql
 -- foreign keys
 -- Reference:  Translators_Countries (table:  Translators)
 ALTER TABLE  Translators ADD CONSTRAINT  Translators_Countries
@@ -407,7 +368,6 @@ ALTER TABLE RegisteredClasses ADD CONSTRAINT OrderClasses_Orders
    FOREIGN KEY (OrderID)
    REFERENCES Orders (OrderID);
 
-
 -- Reference: OrderDetails_EducationalPrograms (table: RegisteredPrograms)
 ALTER TABLE RegisteredPrograms ADD CONSTRAINT OrderDetails_EducationalPrograms
    FOREIGN KEY (ProgramID)
@@ -460,5 +420,4 @@ ALTER TABLE Teachers ADD CONSTRAINT Teachers_Countries
 ALTER TABLE Webinars ADD CONSTRAINT Webinars_Classes
    FOREIGN KEY (ClassID)
    REFERENCES Classes (ClassID);
-```
 ```

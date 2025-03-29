@@ -16,16 +16,15 @@ This project focuses on modeling an **educational platform database**, supportin
 
 The database was designed with **MS SQL Server**, implementing **procedures, triggers, views, and functions**.
 
-![Database Scheme](img/database-scheme.png)
-
 ## 📖 Documentation
 For a detailed explanation of the requirements, database schema, functionality, and implementation, see:  
 📄 [Project requirements](requirements.pdf)  
-📄 [Platform functionality overview](db/functionality.md)  
-📄 [Database Scheme](db/database-scheme.pdf)  
-📄 [Procedures](db/procedures.md)  
-📄 [Functions](db/functions.md)  
-📄 [Triggers](db/triggers.md)  
-📄 [Indexes](db/indexes.md)  
-📄 [Roles](db/roles.md)  
-📄 [Project Report](db/report.md) – contains a summary of all the above documentation.
+📄 [Platform functionality overview](docs/functionality.md)  
+📄 [Database Schema (description and tables)](docs/database-schema.md)    
+📄 [Procedures](docs/procedures.md)  
+📄 [Functions](docs/functions.md)  
+📄 [Triggers](docs/triggers.md)  
+📄 [Indexes](docs/indexes.md)  
+📄 [Roles](docs/roles.md)  
+📄 [Data generator](docs/data-generator.md)  
+📄 [Project Report](docs/report.md) – contains a summary of all the above documentation.

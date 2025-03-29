@@ -1,95 +1,99 @@
-# **Podstawy baz danych Projekt**
+# 🎓 Learning Platform DB
+
+A database model for a hybrid learning platform, developed during the Database Systems course in the 3rd year of university studies. Designed in **MS SQL Server**, including tables, relationships, procedures, functions, triggers, indexes and roles.
+
+## 👥 Team Members:
+- **Stas Kochevenko** | skochv04@gmail.com
+- **Olgierd Smyka**
+- **Bernard Gawor**
+
+## 1. **Platform functionality overview**
+
+### **Users**
+
+Unregistered client:
+
+- Viewing available services
+- Creating an individual or business account
+
+Student (client with an account):
+
+- Viewing available services
+- Ability to enroll in free or paid educational programs and classes in selected studies by making a payment
+- Viewing all educational programs the student is enrolled in, along with their details
+- Access to learning materials in courses and studies
+- Viewing the schedule of classes the student is enrolled in
+
+Educator (teacher/translator):
+
+- Viewing all educational programs they lead, along with their details
+- Access to learning materials for educational programs and the ability to edit them
+- Ability to approve attendance lists for classes
+- Ability to assign grades for classes and exams for students in the study program (teacher only)
+- Ability to approve make-up classes for student absences
+
+System Administrator:
+
+- Managing the class schedule for educational programs
+- Updating available services
+- Ability to generate financial reports
+- Access to statistical data
+- Ability to modify student data
+- Editing the employee list
+
+School Director:
+
+- Has the privileges of a system administrator
+- Changing user access to educational programs
 
 
-Bernard Gawor, Olgierd Smyka, Stas Kochevenko
-## 1. **Funkcjonalność systemu**
+### **System**
 
-### **Użytkownicy**
-
-Klient bez konta:
-
-- Wyświetlanie oferowanych usług
-- Utworzenie konta indywidualnego bądź firmowego
-
-Student (klient z kontem):
-
-- Wyświetlanie oferowanych usług
-- Możliwość zapisu na bezpłatne lub płatne programy edukacyjne oraz pojedyncze zajęcia na wybranych studiach poprzez uiszczenie opłaty
-- Wyświetlanie wszystkich programów edukacyjnych, na które jest zapisany oraz szczegółów ich dotyczących
-- Dostęp do materiałów dydaktycznych w kursach i na studiach
-- Wyświetlanie harmonogramu zajęć, na które jest zapisany
-
-Pracownik (nauczyciel/translator): 
-
-- Wyświetlanie wszystkich programów edukacyjnych, które prowadzi oraz szczegółów ich dotyczących
-- Dostęp do materiałów dydaktycznych programów edukacyjnych oraz możliwość ich edycji
-- Możliwość zatwierdzenia listy obecności studentów na zajęciach
-- Możliwość wystawiania ocen z zajęć oraz egzaminów studentów w ramach studiów (tylko dla nauczyciela)
-- Możliwość zatwierdzenia odrobienia nieobecności studenta
-
-Pracownik systemowy:
-- Zarządzanie harmonogramem zajęć, prowadzonych w ramach programów edukacyjnych
-- Aktualizacja oferowanych usług
-- Możliwość tworzenia raportów finansowych
-- Dostęp do danych statystycznych
-- Możliwość zmiany danych studenta
-- Edycja listy pracowników
+- Financial reports – summary of revenues for each webinar/course/study program
+- List of "debtors" – people who have used services but have not made payments
+- General report on the number of registered participants for upcoming events (with information on whether the event is in-person or remote)
+- General report on attendance for completed events
+- Attendance list for each training session, including date, first name, last name, and attendance status (present or absent)
+- Location conflict report: list of people enrolled in at least two upcoming training sessions that overlap in time
+- Overview of externally registered students
+- Overview of details for specific educational programs
+- Automatic update of access to purchased educational programs and classes after a successful transaction
+- Verification of the possibility to change access to an educational program or one of classes
+- Automatic status change for completing an educational program after receiving a passing grade on the exam
 
 
-Dyrektor szkoły:
-- Ma uprawnienia pracownika systemowego oraz ma dostęp do takich funkcji:
-- Zmiana dostępu użytkownika do programu edukacyjnego
+### **Specifications**
 
-
-
-## **System**
-
-- Raporty finansowe – zestawienie przychodów dla każdego webinaru/kursu/studium
-- Lista „dłużników” – osoby, które skorzystały z usług, ale nie uiściły opłat.
-- Ogólny raport dotyczący liczby zapisanych osób na przyszłe wydarzenia (z informacją, czy wydarzenie jest stacjonarnie, czy zdalnie)
-- Ogólny raport dotyczący frekwencji na zakończonych już wydarzeniach
-- Lista obecności dla każdego szkolenia z datą, imieniem, nazwiskiem i informacją czy uczestnik był obecny, czy nie
-- Raport bilokacji: lista osób, które są zapisane na co najmniej dwa przyszłe szkolenia, które ze sobą kolidują czasowo
-- Przegląd listy studentów zapisanych z zewnątrz
-- Przegląd szczegółów dotyczących konkretnych programów edukacyjnych
-- Automatyczna aktualizacja dostępu do zakupionych programów edukacyjnych oraz pojedynczych zajęć po udanej transakcji
-- Weryfikacja możliwości zmiany dostępu do programu edukacyjnego albo pojedynczych zajęć
-- Automatyczna zmiana statusu zaliczenia programu edukacyjnego po otrzymaniu pozytywnej oceny z egzaminu 
-
-
-## **Specyfikacje**
-
-- Kursy i studia mogą odbywać się: online, stacjonarnie, hybrydowo
-- Stacjonarne zajęcia kursów i studiów posiadają limit miejsc
-- Webinary udostępniane są uczestnikom na okres 30 dni
-- Zaliczenie kursu wymaga zaliczenia min. 80% modułów
-- W przypadku studiów wymagane jest zaliczenie praktyk oraz frekwencja na poziomie minimum 80%, przy czym nieobecności mogą zostać odrobione poprzez uczestnictwo w zajęciach lub kursie komercyjnym o zbliżonej tematyce
-- Tematyka programów studiów nie może być modyfikowana po ich rozpoczęciu
-- Praktyki trwają 14 dni – wymagana jest tu 100% frekwencja
-- Możliwość zapisania się na pojedyncze spotkania bez konieczności udziału w całym studium, przy tym cena jest inna
-- Administrator ma możliwość zapisu klientów na nieopłacone szkolenia // W sytuacjach wyjątkowych
-- Uczestnictwo w kursie wymaga wpłacenia zaliczki przy zapisie, oraz dopłaty całości kwoty najpóźniej 3 dni przed rozpoczęciem kursu
-- Uczestnictwo w studium wymaga uiszczenia wpisowego oraz uiszczenia opłaty za dany zjazd najpóźniej 3 dni przed jego rozpoczęciem
-- Szkolenia mogą być prowadzone w różnych ustalonych językach
-- Wszystkie zajęcia online odbywają się na zewnętrznej platformie chmurowej
-- System płatności jest dostarczany przez zewnętrzną firmę
-
-
-<div style="page-break-after: always;"></div>
-
-## **2. Schemat Bazy Danych**
-![dbschema](img/Projekt-2024-01-20.png)
-
-Oferowane przez firmę usługi (różnego rodzaju kursy i szkolenia) łączy EducationalPrograms. Każdy rekord przedstawia albo studia (Studies), albo kurs (Courses) albo webinar (Webinars). Spis wszystkich poszczególnych zajęć (spotkań) znajduje się w tabeli Classes. Spotkania mogą być stacjonarne (OfflineClasses) lub niestacjonarne (OnlineClasses).
-Kursy (Courses) składają się z modułów (Modules). Pojedyncze zajęcia tych modułów mogą być prowadzone stacjonarnie lub niestacjonarnie.
-Studia podobnie do kursów składają się z modułów (Modules), oraz posiadają praktyki (Practises).
-
-
-Studenci mogą składać zamówienia (Orders) i przeglądać listę programów (RegisteredPrograms) oraz pojedynczych spotkań (RegisteredClasses), na które są zapisane.
+- Courses and study programs can be held: online, in-person, or hybrid
+- In-person classes for courses and study programs have a participant limit
+- Webinars are available to participants for 30 days
+- Completing a course requires passing at least 80% of the modules
+- For study programs, it is required to complete practical classes and maintain a minimum attendance of 80%, with absences being made up by attending classes or a commercial course on a similar topic
+- Practical classes last for 14 days – 100% attendance is required
+- It is possible to enroll in chosen events without attending the entire study program, with a different pricing structure for such enrollments
+- The administrator can enroll clients in unpaid training courses in exceptional situations
+- Participation in a course requires a deposit at the time of registration, and the full payment must be made no later than 3 days before the course begins
+- Participation in the study program requires an enrollment fee and payment for the specific session no later than 3 days before it starts
+- Trainings may be conducted in various pre-determined languages
+- All online classes are held on an external cloud platform
+- The payment system is provided by an external company
 
 <div style="page-break-after: always;"></div>
 
-## 3. **Tabele**
+## **2. Database Schema**
+![dbschema](img/database-schema.png)
+
+The services offered by the company (various courses and trainings) are connected by **EducationalPrograms**. Each record represents either a study program (**Studies**), a course (**Courses**), or a webinar (**Webinars**). A list of all classes (sessions) is stored in the **Classes** table. These sessions can be in-person (**OfflineClasses**) or online (**OnlineClasses**).
+
+**Courses** consist of **Modules**. Classes of these modules can be conducted in-person or online.
+
+Similar to courses, study programs consist of **Modules** and also include **Practises**.
+
+Students can make **Orders** and view the list of programs (**RegisteredPrograms**) and classes (**RegisteredClasses**) they are enrolled in.
+
+<div style="page-break-after: always;"></div>
+
+## 3. **Tabels**
 ```sql
 -- Table:  Translators
 CREATE TABLE  Translators (
@@ -101,7 +105,7 @@ CREATE TABLE  Translators (
 );
 
 -- Table: Attendance
--- Zawiera informacje dotyczące obecności konkretnych studentów z tabeli Students na zajęciach z tabeli Classes
+-- Contains information regarding the attendance of specific students from the Students table in the classes from the Classes table
 CREATE TABLE Attendance (
    AttendanceID int AUTO_INCREMENT NOT NULL,
    ClassID int  NOT NULL,
@@ -112,7 +116,7 @@ CREATE TABLE Attendance (
 );
 
 -- Table: Classes
--- Pojedyncze spotkanie w ramach programu edukacyjnego (albo konkretnego modułu w przypadku kursów lub studiów), może być w formacie online lub offline
+-- A single session within an educational program (or a specific module in the case of courses or study programs) can be either online or offline
 CREATE TABLE Classes (
    ClassID int AUTO_INCREMENT NOT NULL,
    TeacherID int  NOT NULL,
@@ -136,7 +140,7 @@ CREATE TABLE Countries (
 );
 
 -- Table: EducationalPrograms
--- Zawiera szczegóły konkretnego programu edukacyjnego, którym mogą być studia z tabeli Studies, kursy z tabeli Courses lub Webinary z tabeli Webinars, w każdym rekorcie tylko jedna z trzech wartości: StudiesID, WebinarID, CourseID nie jest NULL-em.
+-- Contains details of a specific educational program, which can be a study program from the Studies table, a course from the Courses table, or a webinar from the Webinars table. In each record, only one of the three values: StudiesID, WebinarID, or CourseID is not NULL
 CREATE TABLE EducationalPrograms (
    ProgramID int AUTO_INCREMENT NOT NULL,
    ProgramName varchar(100)  NOT NULL UNIQUE,
@@ -168,7 +172,7 @@ CREATE TABLE Courses (
 );
 
 -- Table: Exams
--- Zawiera wyniki z egzaminów dla studentów (Tabela Students) zapisanych na studia(Tabela Studies)
+-- Contains exam results for students (from the Students table) enrolled in study programs (from the Studies table)
 CREATE TABLE Exams (
    ExamID int AUTO_INCREMENT NOT NULL,
    StudiesID int  NOT NULL,
@@ -179,9 +183,9 @@ CREATE TABLE Exams (
 );
 
 -- Table: Modules
--- Zbiór zajęć na określony temat, nie tożsamy z pojęciem przedmiotu (jeden moduł może zawierać zajęcia z różnych przedmiotów). Pozwalają na łączenie zajęć różnej formy kształcenia (stacjonarne, online asynchroniczne, online synchroniczne, hybrydowe).
--- Dla przykładu:
--- Moduł “Programowanie w matematyce” mógłby obejmować szereg zajęć z przedmiotów matematycznych, na których problemy rozwiązywane są przy pomocy pisanego kodu
+-- A set of classes on a specific topic, not identical to the concept of a subject (one module can include classes from different subjects). It allows for the combination of classes with different forms of education (in-person, asynchronous online, synchronous online, hybrid).
+-- For example:
+-- The module "Programming in Mathematics" could include a series of classes from mathematical subjects, where problems are solved using written code
 CREATE TABLE Modules (
    ModuleID int AUTO_INCREMENT NOT NULL,
    ProgramID int  NOT NULL,
@@ -192,7 +196,7 @@ CREATE TABLE Modules (
 
 
 -- Table: OfflineClasses
--- Podzbiór Classes: pojedyncze zajęcia, prowadzone w trybie offline (stacjonarnie), zawsze są podporządkowane jednemu modułu zajęć.
+-- A subset of Classes: classes conducted in offline (in-person) mode are always associated with a specific module
 CREATE TABLE OfflineClasses (
    OfflineClassID int AUTO_INCREMENT NOT NULL,
    ClassID int  NOT NULL,
@@ -205,7 +209,7 @@ CREATE TABLE OfflineClasses (
 
 
 -- Table: OnlineClasses
--- Podzbiór Classes: pojedyncze zajęcia, prowadzone w trybie online. Obejmują synchroniczne i asynchroniczne moduły.
+-- A subset of Classes: classes conducted online. These include synchronous and asynchronous modules
 CREATE TABLE OnlineClasses (
    OnlineClassID int AUTO_INCREMENT NOT NULL,
    ClassID int  NOT NULL,
@@ -220,7 +224,7 @@ CREATE TABLE OnlineClasses (
 
 ```sql
 -- Table: Orders
--- Lista zamówień przez Studentów. Informacja o zakupionych programach oraz pojedynczych spotkaniach znajduje się w tabelach RegisteredPrograms i RegisteredClasses odpowiednio.
+-- A list of orders placed by students. Information about purchased programs and individual classes is stored in the RegisteredPrograms and RegisteredClasses tables, respectively
 CREATE TABLE Orders (
    OrderID int AUTO_INCREMENT NOT NULL,
    StudentID int  NOT NULL,
@@ -231,7 +235,7 @@ CREATE TABLE Orders (
 );
 
 -- Table: Payments
--- Spis płatność dokonanych w celu częściowego lub całkowitego opłacenia zamówienia z tabeli Orders. Kolumna Status informuje czy płatność została zakończona sukcesem, natomiast kolumna SystemPaymentID zawiera link do zewnętrznego systemu płatności.
+-- A list of payments made to partially or fully pay for an order from the Orders table. The Status column indicates whether the payment was successfully completed, while the SystemPaymentID column contains a link to the external payment system
 CREATE TABLE Payments (
    PaymentID int AUTO_INCREMENT NOT NULL,
    OrderID int  NOT NULL,
@@ -243,7 +247,7 @@ CREATE TABLE Payments (
 );
 
 -- Table: Practises
--- Każde studia mogą zawierać wiele praktyk, tabela przetrzymuje opis i identyfikator danych praktyk. W Classes znajduje się pole PracticeID, które nie jest NULL-em w przypadku gdy dane zajęcia realizują dane praktyki.
+-- Each study program may include multiple practical classes. The table stores the description and identifier of each practical classes. In the Classes table, there is a field PracticeID, which is not NULL when the specific classes are part of a given practical classes.
 CREATE TABLE Practises (
    PractiseID int AUTO_INCREMENT NOT NULL,
    StudiesID int  NOT NULL,
@@ -253,7 +257,7 @@ CREATE TABLE Practises (
 );
 
 -- Table: RegisteredClasses
--- Lista zakupionych przez studentów pojedynczych classes (zjazdów w ramach studiów) z numerami zamówienia
+-- A list of individual classes (sessions within study programs) purchased by students, along with their order numbers
 CREATE TABLE RegisteredClasses (
    RegisteredClassID int AUTO_INCREMENT NOT NULL,
    OrderID int  NOT NULL,
@@ -263,7 +267,7 @@ CREATE TABLE RegisteredClasses (
 );
 
 -- Table: RegisteredPrograms
--- Lista zakupionych przez studentów EducationalProgramów z numerami zamówienia
+-- A list of EducationalPrograms purchased by students, along with their order numbers
 CREATE TABLE RegisteredPrograms (
    RegisteredProgramID int AUTO_INCREMENT NOT NULL,
    OrderID int  NOT NULL,
@@ -275,7 +279,7 @@ CREATE TABLE RegisteredPrograms (
 );
 
 -- Table: SubjectCategories
--- Zawiera kategorie różnych prowadzonych przedmiotów z tabeli Subjects, np. Matematyka(SubjectCategories) jest kategorią przedmiotu algebra(Subjects)
+-- Contains categories of various subjects conducted, as stored in the Subjects table. For example, Mathematics (SubjectCategories) is a category of the subject Algebra (Subjects)
 CREATE TABLE SubjectCategories (
    CategoryID int AUTO_INCREMENT NOT NULL,
    CategoryName varchar(40)  NOT NULL UNIQUE,
@@ -503,9 +507,9 @@ ALTER TABLE Webinars ADD CONSTRAINT Webinars_Classes
 
 <div style="page-break-after: always;"></div>
 
-## 4. **Widoki**
+## 4. **Views**
 
-### **1. Raporty finansowe – zestawienie przychodów dla każdego webinaru/kursu/studium**
+### **1. Financial Reports – revenue summary for each webinar/course/study program**
 ```sql
 -- Webinars
 CREATE VIEW WebinarsRevenue AS
@@ -551,7 +555,7 @@ GROUP BY Studies.StudiesID, EducationalPrograms.ProgramName, EducationalPrograms
 
 
 
-### **2. Lista „dłużników” – osoby, które skorzystały z usług, ale nie uiściły opłat.**
+### **2. "Debtors" list – individuals who have used the services but have not made the payments**
 ```sql
 CREATE VIEW Debtors AS
     SELECT S.*, ISNULL(OPS.ProgramsCost, 0) + ISNULL(OCS.ClassesCost, 0) - ISNULL(OP.Paid, 0) As Debt
@@ -580,7 +584,7 @@ CREATE VIEW Debtors AS
 ```
 ![Debtors](img/Debtors.png)
 
-### **3. Ogólny raport dotyczący liczby zapisanych osób na przyszłe wydarzenia - realizowane w przyszłości zajęcia (z informacją, czy zajęcia są stacjonarnie, czy zdalnie).**
+### **3. General report on the number of registered participants for upcoming events – future classes (with information on whether the classes are in-person or remote)**
 ```sql
 CREATE VIEW NumOfInterestedInFutureClasses as
 with
@@ -604,7 +608,7 @@ where Classes.StartTime > getdate()
 ![NumOfInterestedInFutureClasses](img/NumOfInterestedInFutureClasses.png)
 
 
-### **4. Ogólny raport dotyczący liczby zapisanych osób na jeszcze nie rozpoczęte programy edukacyjne wraz z datą rozpoczęcia**
+### **4. General report on the number of registered participants for upcoming educational programs, along with their start dates**
 ```sql
 CREATE VIEW NumOfInterestedInFutureEducationalPrograms as
 with tab as (
@@ -623,7 +627,7 @@ from EducationalPrograms
 
 <div style="page-break-after: always;"></div>
 
-### **5. Ogólny raport dotyczący listy osób listy osób zapisanych na stacjonarne zajęcia w ramach programu edukacyjnego.**
+### **5. General report on the list of individuals registered for in-person classes within an educational program**
 ```sql
 
 CREATE VIEW OfflineParticipantsList as
@@ -648,7 +652,7 @@ from Students as st
 ```
 ![OfflineParticipantsList](img/OfflineParticipantsList.png)
 
-### **6. Lista obecności dla każdego szkolenia z datą, imieniem, nazwiskiem i informacją czy uczestnik był obecny, czy nie.**
+### **6. Attendance list for each training session, including date, first name, last name, and information on whether the participant was present or absent**
 ```sql
 
 CREATE VIEW AttendanceAllClasses as 
@@ -661,7 +665,7 @@ LEFT OUTER JOIN Students on Students.StudentID = A.ParticipantID
 
 <div style="page-break-after: always;"></div>
 
-### **7. Raport bilokacji: Lista kolidujących się zajęć wraz z informacją o studencie, ID zajęć oraz kolidyjącymi się terminami.**
+### **7. Bilocation report: List of conflicting classes along with student information, class ID, and conflicting schedules**
 ```sql
 CREATE VIEW BilocationsList as select distinct s.StudentID, s.FirstName + ' ' + s.LastName as Student, a.ClassID as a_ClassID, a.StartTime as a_StartTime, a.EndTime as a_EndTime, b.ClassID as b_ClassID, b.StartTime as b_StartTime, b.EndTime as b_EndTime from Students as s
        inner join Orders as o
@@ -677,7 +681,7 @@ where a.ClassID < b.ClassID and ((a.StartTime BETWEEN b.StartTime and b.EndTime)
 ```
 ![BilocationsList](img/BilocationsList.png)
 
-### **8. Liczba osób dla każdego zakończonego już wydarzenia**
+### **8. Number of participants for each completed event**
 ```sql
 CREATE VIEW NumberOfParticipations as select c.ClassID, c.TeacherID, t.FirstName + ' ' + t.LastName as Teacher, sub.SubjectName, c.StartTime, c.EndTime, count(s.StudentID) as StudentsAmount
    from Classes as c
@@ -696,7 +700,7 @@ group by c.ClassID, c.TeacherID, t.FirstName + ' ' + t.LastName, sub.SubjectName
 
 <div style="page-break-after: always;"></div>
 
-### **9. Dane o każdym przeprowadzonym egzaminie, które zawierają ocenę, ID studenta, ID studiów, ID programu edukacyjnego oraz terminy rozpoczęcia & zakończenia danych studiów**
+### **9. Data for each conducted exam, including the grade, student ID, study program ID, educational program ID, and the start & end dates of the respective studies**
 ```sql
 CREATE VIEW ExamDetails as select ex.ExamID, ex.StudentID, S2.FirstName + ' ' + S2.LastName as Student, ex.Mark, ex.StudiesID, ep.ProgramName, ep.ProgramStart, ep.ProgramEnd from exams as ex
    inner join Studies as s
@@ -708,7 +712,7 @@ CREATE VIEW ExamDetails as select ex.ExamID, ex.StudentID, S2.FirstName + ' ' + 
 ```
 ![ExamDetails](img/ExamDetails.png)
 
-### **10. Lista przedmiotów prowadzonych w ramach modułów pewnych studiów wraz z informacją o kategorii oraz prowadzącym zajęcia z danego przedmiotu**
+### **10. List of subjects conducted within the modules of specific study programs, along with information about the category and the teacher for each subject**
 ```sql
 create view StudiesSubjectsInfo as select ed.ProgramID, ed.ProgramName, m.ModuleName, sub.SubjectName, sc.CategoryName, t.FirstName + ' ' + t.LastName as Teacher
    from Studies as s
@@ -729,7 +733,7 @@ create view StudiesSubjectsInfo as select ed.ProgramID, ed.ProgramName, m.Module
 
 <div style="page-break-after: always;"></div>
 
-### **11. Lista przedmiotów prowadzonych w ramach modułów pewnych kursów wraz z informacją o kategorii oraz prowadzącym zajęcia z danego przedmiotu**
+### **11. List of subjects conducted within the modules of specific courses, along with information about the category and the teacher for each subject**
 ```sql
 create view CoursesSubjectsInfo as select ed.ProgramID, ed.ProgramName, m.ModuleName, sub.SubjectName, sc.CategoryName, t.FirstName + ' ' + t.LastName as Teacher
   from Courses
@@ -749,7 +753,7 @@ create view CoursesSubjectsInfo as select ed.ProgramID, ed.ProgramName, m.Module
 ```
 ![CoursesSubjectsInfo](img/CoursesSubjectsInfo.png)
 
-### **12. Lista przyszłych webinarów, widok wyświetla nazwę przedmiotu, imię i nazwisko nauczyciela, który prowadzi webinar, czas trwania oraz czas dostępu do webinaru**
+### **12. List of upcoming webinars, displaying the subject name, the first and last name of the teacher conducting the webinar, the duration of the webinar, and the access period to the webinar**
 ```sql
 create view WebinarsInfo as select w.WebinarID, c.ClassID, s.SubjectName, t.FirstName + ' ' + t.LastName as TeacherName, c.StartTime as WebinarStart, c.EndTime as WebinarEnd, ed.ProgramStart as AccessStart, ed.ProgramEnd as AccessEnd
    from webinars as w
@@ -763,7 +767,7 @@ create view WebinarsInfo as select w.WebinarID, c.ClassID, s.SubjectName, t.Firs
 
 <div style="page-break-after: always;"></div>
 
-### **13. Lista programów edukacyjnych, na które są zapisane studenty, wraz z numerem zamówienia, w którym dany program był zamówiony, datą rozpoczęcia i zakończenia programu oraz informacją o zaliczeniu.**
+### **13. List of educational programs that students are enrolled in, along with the order number in which the program was purchased, the start and end dates of the program, and completion status**
 ```sql
 create view StudentsPrograms as select s.StudentID, s.FirstName + ' ' + s.LastName as Student, rp.RegisteredProgramID, ep.ProgramID, ep.ProgramName, ep.ProgramStart, ep.ProgramEnd, rp.Access, rp.Passed
     from Students as s
@@ -776,7 +780,7 @@ create view StudentsPrograms as select s.StudentID, s.FirstName + ' ' + s.LastNa
 ```
 ![StudentsPrograms](img/StudentsPrograms.png)
 
-### **14. Lista osób, które są zapisane na dane zajęcia "z zewnątrz". Widok wyświetla imię i nazwisko studenta, numer zamówienia, w którym dane spotkanie było zamówione, numer spotkania, status dostępu, nazwę przedmiotu dla danego spotkania, nazwę modulu, w ramach którego jest prowadzone spotkanie, oraz nazwę praktyki (o ile to spotkanie jest praktyką)**
+### **14. List of individuals enrolled in the specific session "externally". The view displays the student's first and last name, the order number in which the session was purchased, the session number, access status, the subject name for the session, the module name under which the session is conducted, and the name of the practice (if the session is a practice)**
 ```sql
 create view StudentsOuterClasses as select s.StudentID, s.FirstName + ' ' + s.LastName as Student, o.OrderID, c.ClassID, m.ModuleName, sub.SubjectName, t.FirstName + ' ' + t.LastName as Teacher, c.StartTime, c.EndTime, ofl.RoomNumber, rc.Access
    from Students as s
@@ -803,9 +807,9 @@ create view StudentsOuterClasses as select s.StudentID, s.FirstName + ' ' + s.La
 
 <div style="page-break-after: always;"></div>
 
-## 5. **Procedury**
+## 5. **Procedures**
 
-### **1. Dodanie nowego Studenta**
+### **1. Adding a New Student**
 ```sql
 CREATE PROCEDURE AddStudent(
    @firstName VARCHAR(20),
@@ -831,7 +835,7 @@ BEGIN
    END CATCH
 END
 ```
-### **2. Usuwanie danych studenta**
+### **2. Deleting a Student's Data**
 ```sql
 ALTER PROCEDURE DeleteStudent(@studentID INT)
 AS
@@ -862,7 +866,7 @@ END
 
 <div style="page-break-after: always;"></div>
 
-### **3. Dodanie nowego kursu**
+### **3. Adding a New Course**
 ```sql
 CREATE PROCEDURE AddCourse
    @Place varchar(40),
@@ -906,7 +910,7 @@ END CATCH
 END;
 ```
 
-### **4. Aktualizacja danych studenta (tylko email albo country)**
+### **4. Updating Student Data (only email or country)**
 ```sql
 CREATE PROCEDURE ChangeStudentData(
   @studentID int,
@@ -928,7 +932,7 @@ BEGIN
 END
 ```
 
-### **5. Dodanie nowego nauczyciela**
+### **5. Adding a new teacher**
 ```sql
 CREATE PROCEDURE AddTeacher(
   @firstName VARCHAR(20),
@@ -951,7 +955,7 @@ BEGIN
 END
 ```
 
-### **6. Oznaczenie odrobienia nieobecności na zajęciach przez studenta**
+### **6. Marking the make-up of student absences for classes**
 ```sql
 CREATE PROCEDURE redoAttendance (
     @classID int, 
@@ -993,7 +997,7 @@ END
 
 <div style="page-break-after: always;"></div>
 
-### **7. Dodanie zamówienia**
+### **7. Adding an order**
 
 ```sql
 CREATE PROCEDURE AddOrder(
@@ -1019,7 +1023,7 @@ BEGIN
   END CATCH
 END
 ```
-### **8. Dodanie pojedynczych zajęć do zamówienia**
+### **8. Adding classes to an order**
 ```sql
 CREATE PROCEDURE RegisterClass(
    @OrderID INT,
@@ -1053,7 +1057,7 @@ END
 
 <div style="page-break-after: always;"></div>
 
-### **9. Dodawanie programu edukacyjnego do zamówienia**
+### **9. Adding an educational program to an order**
 ```sql
 CREATE PROCEDURE RegisterProgram(
  @OrderID INT,
@@ -1086,7 +1090,7 @@ END;
 
 <div style="page-break-after: always;"></div>
 
-### **10. Dodanie nowego pojedynczego niestacjonarnego zajęcia**
+### **10. Adding a new online class**
 ```sql
 CREATE PROCEDURE AddOnlineClass
  @Link varchar(255),
@@ -1156,7 +1160,7 @@ BEGIN
 END;
 ```
 
-### **11. Dodanie nowego pojedynczego stacjonarnego zajęcia**
+### **11. Adding a new in-person class**
 ```sql
 CREATE PROCEDURE AddOfflineClass
   @RoomNumber int,
@@ -1223,7 +1227,7 @@ BEGIN
 END;
 ```
 
-### **12. Dodanie nowego webinaru**
+### **12. Adding a new webinar**
 ```sql
 CREATE PROCEDURE AddWebinar
   @ProgramName varchar(100),
@@ -1288,7 +1292,7 @@ END;
 <div style="page-break-after: always;"></div>
 
 
-### **13. Dodanie nowego kursu**
+### **13. Adding a new course**
 ```sql
 CREATE PROCEDURE AddCourse
   @ProgramName varchar(100),
@@ -1345,7 +1349,7 @@ END;
 <div style="page-break-after: always;"></div>
 
 
-### **14. Dodanie nowych studiów**
+### **14. Adding new studies**
 ```sql
 CREATE PROCEDURE AddStudies
   @ProgramName varchar(100),
@@ -1402,7 +1406,7 @@ END;
 
 <div style="page-break-after: always;"></div>
 
-### **15. Zmiana szczegółów programu edukacyjnego**
+### **15. Changing the details of an educational program**
 ```sql
 CREATE PROCEDURE UpdateEducationalProgram
    @ProgramID INT,
@@ -1501,7 +1505,7 @@ BEGIN
 END;
 ```
 
-### **16. Dodanie Płatności do złożonego zamówienia**
+### **16. Adding payment to a submitted order**
 ```sql
 CREATE PROCEDURE AddPayment
    @OrderID INT,
@@ -1539,7 +1543,7 @@ END;
 
 <div style="page-break-after: always;"></div>
 
-### **17. Dodanie nowych offline zajęć w ramach studiów**
+### **17. Adding new offline classes within a study program**
 ```sql
 
 CREATE PROCEDURE AddStudiesOfflineClasses
@@ -1605,7 +1609,7 @@ BEGIN
    END CATCH
 END;
 ```
-### **18. Procedura, pozwalająca na aktualizację oceny studenta z egzaminu z konkretnych studiów. W przypadku oceny, która mieści się w zakresie 50%-100% ustawia się zaliczenie danego programu w RegisteredPrograms za pomocą triggera #2.**
+### **18. Procedure to update a student's exam grade for specific studies. If the grade falls within the range of 50%-100%, the completion status of the corresponding program in RegisteredPrograms is updated via trigger #2**
 ```sql
 CREATE PROCEDURE SetExamMark(
    @StudentID int,
@@ -1651,7 +1655,7 @@ CREATE PROCEDURE SetExamMark(
 ```
 <div style="page-break-after: always;"></div>
 
-### **19. "Jawna" zmiana statusu dostępu do programu edukacyjnego, którą jawnie ustawiać może wyłącznie dyrektor szkoły.**
+### **19. "Explicit" change of access status to an educational program, which can only be set explicitly by the school director**
 ```sql
 CREATE PROCEDURE SetProgramAccess(
   @RegisteredProgramID int,
@@ -1695,7 +1699,7 @@ END
 ```
 <div style="page-break-after: always;"></div>
 
-### **20. "Jawna" zmiana statusu dostępu do pojedynczych zajęć, którą jawnie ustawiać może wyłącznie dyrektor szkoły.**
+### **20. "Explicit" change of access status to individual classes, which can only be set explicitly by the school director**
 ```sql
 CREATE PROCEDURE SetClassAccess(
   @RegisteredClassID int,
@@ -1740,9 +1744,9 @@ END
 ```
 <div style="page-break-after: always;"></div>
 
-## 4. **Funkcje**
+## 4. **Functions**
 
-### **1. Obliczanie średniej ocen dla studenta**
+### **1. Calculating the average grade for a student**
 ```sql
 CREATE FUNCTION CalculateAverageGradeForStudent
 (
@@ -1762,7 +1766,7 @@ BEGIN
 END;
 ```
 
-### **2. Liczba studentów obecnych na zajęciach**
+### **2. Number of students present at the class**
 ```sql
 CREATE FUNCTION GetClassAttendanceCount
 (
@@ -1785,7 +1789,7 @@ BEGIN
 END;
 ```
 
-### **3. Obliczanie ilości dni pozostałych do zakończenia programu edukacyjnego**
+### **3. Calculating the number of days remaining until the completion of the educational program**
 ```sql
 CREATE FUNCTION DaysRemainingInProgram
 (
@@ -1807,7 +1811,7 @@ BEGIN
 END;
 ```
 
-### **4. Obliczanie sumy pełnych kwot za wszystkie programy na danym zamówieniu**
+### **4. Calculating the total amount for all programs in a given order**
 
 ```sql
 CREATE FUNCTION CalculateFullPriceForOrder
@@ -1833,7 +1837,7 @@ BEGIN
 END;
 ```
 
-### **5. Obliczanie sum cen wpisowych na programy na danym zamówieniu**
+### **5. Calculating the sum of registration fees for programs in a given order**
 
 ```sql
 CREATE FUNCTION CalculateEntryPriceForOrder
@@ -1863,7 +1867,7 @@ END;
 ```
 <div style="page-break-after: always;"></div>
 
-### **6. Obliczanie łącznej kwoty wydanej przez danego studenta na Programy edukacyjne za konkretny okres czasowy**
+### **6. Calculating the total amount spent by a student on educational programs for a specific time period**
 ```sql
 CREATE FUNCTION CalculateTotalPaymentsForStudent
 (
@@ -1884,7 +1888,7 @@ BEGIN
 END;
 ```
 
-### **7. Wyświetlanie harmonogramu zajęć na konkretny dzień dla konkretnego studenta**
+### **7. Displaying the class schedule for a specific day for a specific student**
 ```sql
 CREATE FUNCTION ScheduleForStudent(@StudentID int, @day DATE)
     RETURNS TABLE
@@ -1895,7 +1899,7 @@ CREATE FUNCTION ScheduleForStudent(@StudentID int, @day DATE)
         WHERE @StudentID = ofp.StudentID and @day = cast(StartTime as date) and Access = 'true'
 ```
 
-### **8. Obliczenie ilości zamówionych przez studentów programów w danym roku**
+### **8. Calculating the number of programs ordered by students in a given year**
 ```sql
 CREATE FUNCTION OrdersProgramsAmount(@year int)
    RETURNS INT
@@ -1911,7 +1915,7 @@ CREATE FUNCTION OrdersProgramsAmount(@year int)
    END
 ```
 
-### **9. Wyświetlenie trwających w tej chwili synchronicznych zajęć niestacjonarnych**
+### **9. Displaying currently ongoing synchronous online classes**
 ```sql
 CREATE FUNCTION LiveOnlineSynchClasses()
    RETURNS TABLE
@@ -1923,7 +1927,7 @@ CREATE FUNCTION LiveOnlineSynchClasses()
 ```
 <div style="page-break-after: always;"></div>
 
-### **10. Obliczenie średniej oceny na pojedynczych zajęciach (tylko w przypadku, gdy ocenę wystawiono każdemu uczestnikowi zajęć)**
+### **10. Calculating the average grade for individual sessions (only if a grade has been assigned to each participant of the session)**
 ```sql
 CREATE FUNCTION AverageMarkOnClass(@ClassID int)
    RETURNS INT
@@ -1936,7 +1940,7 @@ CREATE FUNCTION AverageMarkOnClass(@ClassID int)
    END
 ```
 
-### **11. Funkcja sprawdzająca minimalnie możliwej liczby uczęstników zajęć w ramach modułu studiów (jeśli danę zajęcia są dodawane do studiów)**
+### **11. Function checking the minimum possible number of participants for a session within a study module (if the session is added to the studies)**
 ```sql
 CREATE FUNCTION CalculateMinClassParticipantsForStudies(@ModuleID int)
 RETURNS INT
@@ -1954,7 +1958,7 @@ BEGIN
 END;
 ```
 
-### **12. Wyświetlenie listy osób zapisanych na dane offline-wydarzenie w ramach studiów**
+### **12. Displaying the list of people enrolled in a specific offline event within a study program**
 ```sql
 CREATE FUNCTION AllClassParticipants(@ClassID int)
     RETURNS TABLE
@@ -1984,7 +1988,7 @@ CREATE FUNCTION AllClassParticipants(@ClassID int)
 
 <div style="page-break-after: always;"></div>
 
-### **13. Wyświetlenie listy osób zapisanych na dany program**
+### **13. Displaying the list of people enrolled in a specific program**
 ```sql
 CREATE FUNCTION AllProgramParticipants(@ProgramID int)
     RETURNS TABLE
@@ -1997,7 +2001,7 @@ CREATE FUNCTION AllProgramParticipants(@ProgramID int)
         where ep.ProgramID = @ProgramID
 ```
 
-### **14. Wyświetlenie listy studiów, na które dany student jest zapisany i ma dostęp. Funkcja wykorzystywana jest w procedurze #18 oraz triggerze #2**
+### **14. Displaying the list of studies a student is enrolled in and has access to. This function is used in procedure #18 and trigger #2**
 ```sql
 CREATE FUNCTION StudentStudies(@StudentID int)
     RETURNS TABLE
@@ -2010,7 +2014,7 @@ CREATE FUNCTION StudentStudies(@StudentID int)
         where @StudentID = sp.StudentID and StudiesID is not null and access = 'true'
 ```
 
-### **15. Wyświetlenie listy webinarów, na które dany student jest zapisany i ma dostęp**
+### **15. Displaying the list of webinars a student is enrolled in and has access to**
 ```sql
 CREATE FUNCTION StudentWebinars(@StudentID int)
     RETURNS TABLE
@@ -2023,7 +2027,7 @@ CREATE FUNCTION StudentWebinars(@StudentID int)
         where @StudentID = sp.StudentID and WebinarID is not null and access = 'true'
 ```
 
-### **16. Wyświetlenie listy kursów, na które dany student jest zapisany i ma dostęp**
+### **16. Displaying the list of courses a student is enrolled in and has access to**
 ```sql
 CREATE FUNCTION StudentCourses(@StudentID int)
     RETURNS TABLE
@@ -2038,8 +2042,8 @@ CREATE FUNCTION StudentCourses(@StudentID int)
 
 <div style="page-break-after: always;"></div>
 
-## 6. **Triggery**
-### **1. Aktualizacja stanu zapłaty zamówienia po udanej transakcji w tabeli Payments, oraz nadanie dostępu po opłaceniu wpisowych**
+## 6. **Triggers**
+### **1. Updating the payment status of an order after a successful transaction in the Payments table, and granting access after the payment of the enrollment fees**
 ```sql
 ALTER TRIGGER trg_UpdateOrderStatus
 ON Payments
@@ -2104,7 +2108,7 @@ END;
 ```
 <div style="page-break-after: always;"></div>
 
-### **2. Ustawienie statusu zaliczenia konkretnych studiów konkretnego studenta w przypadku aktualizacji/dodawaniu jego oceny za egzamin, która musi mieścić się w zakresie od 50% do 100%.**
+### **2. Setting the completion status of a specific student's studies upon updating/adding their exam grade, which must fall within the range of 50% to 100%**
 ```sql
 CREATE TRIGGER PassStudies
 ON Exams
@@ -2126,7 +2130,7 @@ END
 ```
 
 
-### **3. Trigger, który uniemożliwia zapisywanie się na zajęcia, na których już nie ma miejsc.**
+### **3. Trigger that prevents enrollment in classes that are already full**
 ```sql
 CREATE TRIGGER ClassesParticipantsAmountCheck
 ON RegisteredClasses
@@ -2147,7 +2151,7 @@ BEGIN
 END
 ```
 
-### **4. Trigger, który uniemożliwia rejestrowanie na dany program edukacyjny jeśli on jest studiami, w przypadku przekroczenia maksymalnie możliwej liczby uczęstników.**
+### **4. Trigger that prevents registration for a given educational program if it is a study program and the maximum number of participants has been exceeded**
 ```sql
 CREATE TRIGGER StudiesParticipantsAmountCheck
 ON RegisteredPrograms
@@ -2171,7 +2175,7 @@ END
 ```
 <div style="page-break-after: always;"></div>
 
-## 7. **Indeksy**
+## 7. **Indexes**
 ```sql
 CREATE INDEX idx_student_firstname_lastname
 ON Students (FirstName, LastName);
@@ -2241,7 +2245,7 @@ CREATE INDEX idx_Classes_ModuleID ON Classes (ModuleID)
 CREATE INDEX idx_Payments_OrderID ON Payments (OrderID)
 ```
 
-## 8. **Uprawnienia**
+## 8. **Roles**
 
 ### **Administrator**
 ```sql
@@ -2249,7 +2253,7 @@ CREATE ROLE admin
 GRANT ALL PRIVILEGES ON u_smyka.dbo to admin
 ```
 
-### **Dyrektor szkoły**
+### **School Director**
 ```sql
 CREATE ROLE director
 
@@ -2304,7 +2308,7 @@ GRANT SELECT ON AllProgramParticipants to director
 ```
 <div style="page-break-after: always;"></div>
 
-### **Pracownik systemow (moderator)**
+### **System Administrator (moderator)**
 ```sql
 CREATE ROLE moderator
 
@@ -2358,7 +2362,7 @@ GRANT SELECT ON AllProgramParticipants to moderator
 ```
 <div style="page-break-after: always;"></div>
 
-### **Pracownik naukowy (teacher & translator)**
+### **Educator (teacher & translator)**
 ```sql
 CREATE ROLE educator
 
@@ -2412,6 +2416,5 @@ GRANT SELECT ON AllProgramParticipants to student
 ```
 
 
-## 9. **Generator danych**
-Do napisania generatora danych posłużyliśmy się językiem Python.
-Do komunikacji z bazą danych wykorzystana została biblioteka pyodbc, a do generowania losowych wartości biblioteka Faker.
+## 9. **Data Generator**
+We used Python to write the data generator. For communication with the database, we used the pyodbc library, and for generating random values, we used the Faker library.
