@@ -22,8 +22,10 @@ The database was designed with **MS SQL Server**, implementing **procedures, tri
 For a detailed explanation of the requirements, database schema, functionality, and implementation, see:  
 📄 [Project requirements](requirements.pdf)  
 📄 [Platform functionality overview](db/functionality.md)  
+📄 [Database Scheme](db/database-scheme.pdf)  
 📄 [Procedures](db/procedures.md)  
 📄 [Functions](db/functions.md)  
 📄 [Triggers](db/triggers.md)  
 📄 [Indexes](db/indexes.md)  
 📄 [Roles](db/roles.md)  
+📄 [Project Report](db/report.md) – contains a summary of all the above documentation.
