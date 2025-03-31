@@ -3,7 +3,7 @@
 A database model for a hybrid learning platform, developed during the Database Systems course in the 3rd year of university studies. Designed in **MS SQL Server**, including tables, relationships, procedures, functions, triggers, indexes and roles.
 
 ## 👥 Team Members:
-- **Stas Kochevenko** | skochv04@gmail.com
+- **Stas Kochevenko**
 - **Olgierd Smyka**
 - **Bernard Gawor**
 
